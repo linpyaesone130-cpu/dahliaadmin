@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
-:root{--bg:#f4f6fb;--sf:#fff;--sf2:#f7f8fc;--bd:#e2e7f0;--tx:#111827;--tx2:#6b7280;--tx3:#9ca3af;--ac:#6d28d9;--ac2:#7c3aed;--gn:#059669;--yw:#d97706;--rd:#dc2626;--blu:#2563eb;--r:12px;--f:'Inter','Padauk',system-ui,sans-serif;--m:'JetBrains Mono',monospace}
+:root{--bg:#eef2ff;--sf:#ffffff;--sf2:#f5f8ff;--bd:#c7d7f5;--tx:#0f172a;--tx2:#334155;--tx3:#94a3b8;--ac:#1d4ed8;--ac2:#2563eb;--gn:#059669;--yw:#d97706;--rd:#dc2626;--blu:#3b82f6;--r:12px;--f:'Inter','Padauk',system-ui,sans-serif;--m:'JetBrains Mono',monospace}
 *{margin:0;padding:0;box-sizing:border-box}::-webkit-scrollbar{display:none}
 body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;justify-content:center}
 .app{width:100%;max-width:430px;min-height:100vh;background:var(--bg);position:relative}
@@ -21,13 +21,13 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 .auth-card{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:22px;margin-top:24px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
 .fg{margin-bottom:14px}.fg label{display:block;font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:11px 14px;border-radius:var(--r);border:1.5px solid var(--bd);background:var(--sf2);font-size:14px;font-family:var(--f);color:var(--tx);outline:none;transition:.2s}
-.fg input:focus,.fg select:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(109,40,217,.08)}
+.fg input:focus,.fg select:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
 .fg textarea{resize:vertical;min-height:50px;font-family:var(--f)}
 .fg .pw-wrap{position:relative}.fg .pw-wrap input{padding-right:44px}
 .fg .pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx3)}.fg .pw-eye svg{width:18px;height:18px;stroke:currentColor;fill:none}
 .fg .rw{display:flex;gap:8px}.fg .rw>*{flex:1;min-width:0}
 .btn-main{width:100%;padding:13px;border-radius:var(--r);border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--f);text-transform:uppercase;letter-spacing:.5px;color:#fff;transition:.15s}.btn-main:active{transform:scale(.97)}
-.btn-main.purple{background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 4px 16px rgba(109,40,217,.2)}
+.btn-main.purple{background:linear-gradient(135deg,#1d4ed8,#2563eb);box-shadow:0 4px 16px rgba(29,78,216,.2)}
 .btn-main.green{background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 4px 16px rgba(5,150,105,.2)}
 .auth-err{font-size:11px;color:var(--rd);font-weight:600;text-align:center;margin-top:10px;min-height:15px}
 .auth-link{display:block;text-align:center;margin-top:12px;font-size:11px;color:var(--tx3);font-weight:600;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:var(--f)}
@@ -40,7 +40,7 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 .otp-sep{display:flex;align-items:center;font-size:18px;color:var(--bd);font-weight:700}
 /* Header */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:40}
-.hdr-logo{display:flex;align-items:center;gap:8px}.hdr-logo .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#ec4899,#8b5cf6);display:flex;align-items:center;justify-content:center}.hdr-logo .mark svg{width:16px;height:16px;fill:#fff}.hdr-logo .nm{font-size:14px;font-weight:900;text-transform:uppercase}.hdr-logo .nm span{color:var(--ac2)}
+.hdr-logo{display:flex;align-items:center;gap:8px}.hdr-logo .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center}.hdr-logo .mark svg{width:16px;height:16px;fill:#fff}.hdr-logo .nm{font-size:14px;font-weight:900;text-transform:uppercase}.hdr-logo .nm span{color:var(--ac2)}
 .hdr-r{display:flex;align-items:center;gap:6px}
 .cur-sw{display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden}.cur-b{padding:4px 8px;font-size:9px;font-weight:800;border:none;cursor:pointer;font-family:var(--f);transition:.15s;background:var(--sf2);color:var(--tx3)}.cur-b.on{background:var(--ac);color:#fff}
 .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--ac),#ec4899);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
@@ -52,7 +52,7 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 /* Nav */
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--sf);border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:5px 4px calc(env(safe-area-inset-bottom,5px)+8px);z-index:40}
-.nb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 10px;border:none;background:none;cursor:pointer;border-radius:8px;font-family:var(--f);transition:.15s;position:relative}.nb:active{transform:scale(.88)}.nb svg{width:18px;height:18px;stroke:var(--tx3);fill:none;stroke-width:1.8}.nb .nl{font-size:8px;font-weight:800;color:var(--tx3);text-transform:uppercase}.nb.on{background:rgba(109,40,217,.06)}.nb.on svg{stroke:var(--ac2)}.nb.on .nl{color:var(--ac2)}
+.nb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 10px;border:none;background:none;cursor:pointer;border-radius:8px;font-family:var(--f);transition:.15s;position:relative}.nb:active{transform:scale(.88)}.nb svg{width:18px;height:18px;stroke:var(--tx3);fill:none;stroke-width:1.8}.nb .nl{font-size:8px;font-weight:800;color:var(--tx3);text-transform:uppercase}.nb.on{background:rgba(29,78,216,.06)}.nb.on svg{stroke:var(--ac2)}.nb.on .nl{color:var(--ac2)}
 .nb .bdg{position:absolute;top:0;right:2px;min-width:14px;height:14px;border-radius:7px;background:var(--rd);color:#fff;font-size:7px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px}
 /* Cards */
 .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
@@ -117,7 +117,7 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 
 <!-- ═══ LOGIN ═══ -->
 <div id="adminAuth" class="auth-sc">
-  <div><div class="auth-logo" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.1-.45 2.1-1.17 2.83A4 4 0 0118 8a4 4 0 01-1.17 2.83A4 4 0 0118 14a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 011.17-2.83A4 4 0 016 14a4 4 0 011.17-2.83A4 4 0 116 8a4 4 0 014-4 4 4 0 012-4zm0 6a2 2 0 100 4 2 2 0 000-4z"/></svg></div>
+  <div><div class="auth-logo" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.1-.45 2.1-1.17 2.83A4 4 0 0118 8a4 4 0 01-1.17 2.83A4 4 0 0118 14a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 011.17-2.83A4 4 0 016 14a4 4 0 011.17-2.83A4 4 0 116 8a4 4 0 014-4 4 4 0 012-4zm0 6a2 2 0 100 4 2 2 0 000-4z"/></svg></div>
   <div class="auth-title"><span>Dahlia</span> Admin</div><div class="auth-sub">Dashboard Login</div></div>
   <div class="auth-card">
     <div class="fg"><label>Username</label><input id="adEm" type="text" placeholder="e.g. Dahlia28"/></div>
@@ -230,12 +230,19 @@ var sndEnabled=true;function playAlert(){if(!sndEnabled)return;try{var ctx=new(w
 var TG_BOT="8784274109:AAE3Mwasc8opGIPpx-fOl1K6eyKfqpjA_Ms",TG_CHAT="7579946276";function sendTgNotify(msg){if(!TG_BOT||!TG_CHAT)return;fetch("https://api.telegram.org/bot"+TG_BOT+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:"HTML"})}).catch(function(){});}
 function setCur(c){curUnit=c;document.querySelectorAll(".cur-b").forEach(function(b){b.classList.toggle("on",b.textContent===c)});({dash:rDash,orders:rOrd,pays:rPay})[cp]&&({dash:rDash,orders:rOrd,pays:rPay})[cp]();toast("Currency: "+c,"in");}
 
-function rDash(){var t=O.length,pe=O.filter(function(o){return o.status==="pending"}).length,su=O.filter(function(o){return o.status==="success"}).length,fa=O.filter(function(o){return o.status==="failed"}).length,rv=0;O.forEach(function(o){if(o.status==="success")rv+=o.price;});
-var h='<div class="grid2"><div class="scard"><div class="ic" style="background:rgba(37,99,235,.08)"><svg viewBox="0 0 24 24" style="stroke:#2563eb"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="lb">Orders</div><div class="vl">'+t+'</div></div><div class="scard"><div class="ic" style="background:rgba(217,119,6,.08)"><svg viewBox="0 0 24 24" style="stroke:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lb">Pending</div><div class="vl" style="color:var(--yw)">'+pe+'</div></div><div class="scard"><div class="ic" style="background:rgba(5,150,105,.08)"><svg viewBox="0 0 24 24" style="stroke:#059669"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="lb">Done</div><div class="vl" style="color:var(--gn)">'+su+'</div></div><div class="scard"><div class="ic" style="background:rgba(109,40,217,.08)"><svg viewBox="0 0 24 24" style="stroke:#6d28d9"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lb">Revenue</div><div class="vl" style="color:var(--ac);font-size:14px">'+fmtP(rv)+'</div></div></div>';
+function rDash(){var t=O.length,pe=O.filter(function(o){return o.status==="pending"}).length,su=O.filter(function(o){return o.status==="confirmed"||o.status==="success"}).length,fa=O.filter(function(o){return o.status==="failed"}).length,rv=0;O.forEach(function(o){if(o.status==="confirmed"||o.status==="success")rv+=o.price;});
+var h='<div class="grid2"><div class="scard"><div class="ic" style="background:rgba(37,99,235,.08)"><svg viewBox="0 0 24 24" style="stroke:#2563eb"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="lb">Orders</div><div class="vl">'+t+'</div></div><div class="scard"><div class="ic" style="background:rgba(217,119,6,.08)"><svg viewBox="0 0 24 24" style="stroke:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lb">Pending</div><div class="vl" style="color:var(--yw)">'+pe+'</div></div><div class="scard"><div class="ic" style="background:rgba(5,150,105,.08)"><svg viewBox="0 0 24 24" style="stroke:#059669"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="lb">Done</div><div class="vl" style="color:var(--gn)">'+su+'</div></div><div class="scard"><div class="ic" style="background:rgba(29,78,216,.08)"><svg viewBox="0 0 24 24" style="stroke:#6d28d9"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lb">Revenue</div><div class="vl" style="color:var(--ac);font-size:14px">'+fmtP(rv)+'</div></div></div>';
 var sp=t?Math.round(su/t*100):0,pp=t?Math.round(pe/t*100):0,fp=t?Math.round(fa/t*100):0;
 h+='<div class="st-bars"><div class="st-bar"><span class="sb-lb">Success</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(sp,3)+'%;background:var(--gn)"><span class="sb-val">'+su+'</span></div></div></div><div class="st-bar"><span class="sb-lb">Pending</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(pp,3)+'%;background:var(--yw)"><span class="sb-val">'+pe+'</span></div></div></div><div class="st-bar"><span class="sb-lb">Failed</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(fp,3)+'%;background:var(--rd)"><span class="sb-val">'+fa+'</span></div></div></div></div>';
 h+='<div class="sec"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Recent</div><div class="cw">';
-h+=O.slice(0,5).map(function(o){var bc=o.status==="success"?"su":o.status==="pending"?"pe":"fa";return'<div class="li" onclick="go(\'orders\')"><div class="li-i" style="background:linear-gradient(135deg,'+o.gameColor+',#2563eb)">'+((o.gameImg)?'<img src="'+o.gameImg+'" style="width:100%;height:100%;object-fit:cover"/>':o.gameEmoji)+'</div><div class="li-b"><div class="li-t">'+o.game+'</div><div class="li-s">'+o.currencyIcon+' '+o.amount+'</div></div><div class="li-r"><div class="li-v">'+fmtP(o.price)+'</div><span class="bg '+bc+'">'+o.status+'</span></div></div>'}).join("")||'<div class="emp">No orders yet</div>';
+h+=O.slice(0,5).map(function(o){
+  var bc=o.status==="confirmed"||o.status==="success"?"su":o.status==="pending"?"pe":"fa";
+  var statusTxt=o.status==="confirmed"||o.status==="success"?"✓ Confirmed":o.status==="pending"?"⏳ Waiting":"✗ Failed";
+  var gData=G.find(function(g){return g.n===o.game;});
+  var gameImg=gData&&gData.img?gData.img:(o.gameImg||"");
+  var gameThumb=gameImg?'<img src="'+gameImg+'" style="width:100%;height:100%;object-fit:cover"/>':o.gameEmoji;
+  return'<div class="li" onclick="go(\'orders\')" style="cursor:pointer"><div class="li-i" style="background:linear-gradient(135deg,'+(gData&&gData.c?gData.c:o.gameColor)+',#1d4ed8);overflow:hidden">'+gameThumb+'</div><div class="li-b"><div class="li-t">'+o.game+'</div><div class="li-s">'+o.currencyIcon+' '+o.amount+'</div></div><div class="li-r"><div class="li-v">'+fmtP(o.price)+'</div><span class="bg '+bc+'">'+statusTxt+'</span></div></div>';
+}).join("")||'<div class="emp">No orders yet</div>';
 h+='</div>';
 // Revenue chart - last 7 days
 var dayRev={};O.forEach(function(o){if(o.status==="success"&&o.timestamp){var d=new Date(o.timestamp);var k=d.toLocaleDateString("en-US",{month:"short",day:"numeric"});dayRev[k]=(dayRev[k]||0)+o.price;}});
@@ -249,22 +256,98 @@ function rOrd(){
   var vh='';
   if(VERI.length){vh='<div class="cw" style="margin-bottom:12px"><div class="cw-h"><div class="cw-t" style="color:var(--yw)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:var(--yw);fill:none"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>ID Verification ('+VERI.length+')</div></div>';
   vh+=VERI.map(function(v,i){return'<div class="li"><div class="li-i" style="background:linear-gradient(135deg,var(--yw),#f59e0b);color:#fff;font-weight:900;font-size:10px">ID</div><div class="li-b"><div class="li-t">'+v.game+' • '+v.gameId+(v.serverId?" ("+v.serverId+")":"")+'</div><div class="li-s">'+(v.dahliaId||v.authUser||"Guest")+' • '+fd(v.timestamp)+'</div></div><div class="act"><div class="ab" style="color:var(--gn);width:28px;height:28px" onclick="event.stopPropagation();verifyId('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg></div><div class="ab" style="color:var(--rd);width:28px;height:28px" onclick="event.stopPropagation();rejectId('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div></div></div>'}).join("")+'</div>';}
-  var h=vh+'<div class="cw"><div class="cw-h"><div class="cw-t"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Orders</div><div style="display:flex;gap:4px;flex-wrap:wrap"><button class="bt bl" onclick="exportCSV()">CSV</button><button class="bt'+(oF==="all"?" pr":"")+'" onclick="oF=\'all\';rOrd()">All</button><button class="bt'+(oF==="pending"?" yw":"")+'" onclick="oF=\'pending\';rOrd()">Pend</button><button class="bt'+(oF==="success"?" gn":"")+'" onclick="oF=\'success\';rOrd()">Done</button><button class="bt'+(oF==="failed"?" rd":"")+'" onclick="oF=\'failed\';rOrd()">Fail</button></div></div>';
-var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});
-h+=ls.map(function(o){var i=O.indexOf(o);var usr=o.authUser||"guest";var did=o.dahliaId||"";var nm=o.authName||"";return'<div class="li"><div class="li-i" style="background:linear-gradient(135deg,'+o.gameColor+',#2563eb)">'+o.gameEmoji+'</div><div class="li-b"><div class="li-t">'+o.game+'</div><div class="li-s">'+o.userId+(o.serverId?" ("+o.serverId+")":"")+'</div><div style="font-size:7px;color:var(--tx3)">'+fd(o.timestamp)+'</div><div style="font-size:8px;margin-top:1px"><span style="color:var(--ac);font-weight:800;cursor:pointer" onclick="event.stopPropagation();viewUser(\''+usr+'\')">'+(did||usr.split("@")[0])+'</span>'+(nm?' • <span style="color:var(--tx3)">'+nm+'</span>':'')+'</div></div><div class="act">'+(o.status==="pending"?'<div class="ab" style="color:var(--gn);border-color:rgba(5,150,105,.2)" onclick="event.stopPropagation();aO('+i+',\'success\')"><svg viewBox="0 0 24 24" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg></div><div class="ab" style="color:var(--rd);border-color:rgba(220,38,38,.2)" onclick="event.stopPropagation();aO('+i+',\'failed\')"><svg viewBox="0 0 24 24" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>':'<span class="bg '+(o.status==="success"?"su":"fa")+'">'+o.status+'</span>')+'<div class="ab" style="color:var(--blu)" onclick="event.stopPropagation();vO('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div></div></div>'}).join("")||'<div class="emp">No orders</div>';
-h+='</div>';document.getElementById("pg-orders").innerHTML=h;}
-function aO(i,s){O[i].status=s;if(fb&&O[i].fbId){db.collection("orders").doc(O[i].fbId).update({status:s});var uid=O[i].authUser||"guest";db.collection("notifications").add({userId:uid,type:s==="success"?"approved":"rejected",title:s==="success"?"Order Approved!":"Order Rejected",message:O[i].game+" "+O[i].currencyIcon+O[i].amount,orderId:O[i].txnId||"",read:false,timestamp:new Date().toISOString()});}
-var tgMsg=s==="success"?"<b>✅ ORDER APPROVED</b>\n\n":"<b>❌ ORDER REJECTED</b>\n\n";
-tgMsg+="🎮 <b>"+O[i].game+"</b>\n";
-tgMsg+="📦 "+O[i].currencyIcon+" "+O[i].amount+" "+O[i].currency+"\n";
-tgMsg+="👤 User: "+O[i].userId+(O[i].serverId?" ("+O[i].serverId+")":"")+"\n";
-tgMsg+="💰 "+O[i].price+" MMK\n";
-tgMsg+="💳 "+O[i].payment+"\n";
-tgMsg+="🔖 #"+O[i].txnId+"\n\n";
-tgMsg+=s==="success"?"Items will be delivered shortly! ⚡":"Contact support for help.";
-sendTgNotify(tgMsg);
-toast(s==="success"?"Approved":"Rejected",s==="success"?"ok":"er");rOrd();rDash();}
-function vO(i){var o=O[i];document.getElementById("mTi").textContent="Order Details";var rcp=o.receiptUrl?'<div class="fg"><label>Receipt</label><div class="rcp-img"><img src="'+o.receiptUrl+'" onclick="window.open(this.src)"/></div></div>':'<div class="fg"><label>Receipt</label><div class="rcp-none">No receipt</div></div>';var usr=o.authUser||"guest";document.getElementById("mBd").innerHTML='<div style="padding:10px;background:rgba(109,40,217,.05);border-radius:10px;border:1px solid rgba(109,40,217,.1);margin-bottom:12px"><div style="font-size:9px;font-weight:700;color:var(--ac);text-transform:uppercase;margin-bottom:4px">Submitted by</div><div style="font-size:13px;font-weight:800">'+usr+'</div></div><div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="success"?" selected":"")+'>success</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div><div class="fg"><div class="rw"><div><label>Game User ID</label><input id="xOU" value="'+o.userId+'"/></div><div><label>Server</label><input id="xOSv" value="'+(o.serverId||"")+'"/></div></div></div>'+rcp+[{l:"Order",v:o.txnId},{l:"Game",v:o.gameEmoji+" "+o.game},{l:"Package",v:o.currencyIcon+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Account",v:usr},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>'}).join("");document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="svO('+i+')">Save</button><button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
+  var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});
+  var h=vh+'<div class="cw"><div class="cw-h"><div class="cw-t" style="color:var(--ac)"><svg viewBox="0 0 24 24" style="stroke:var(--ac2)"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Orders ('+ls.length+')</div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center"><button class="bt bl" onclick="exportCSV()">CSV</button><button class="bt'+(oF==="all"?" pr":"")+'" onclick="oF=\'all\';rOrd()">All</button><button class="bt'+(oF==="pending"?" yw":"")+'" onclick="oF=\'pending\';rOrd()">⏳ Waiting</button><button class="bt'+(oF==="confirmed"?" gn":"")+'" onclick="oF=\'confirmed\';rOrd()">✓ Done</button><button class="bt'+(oF==="failed"?" rd":"")+'" onclick="oF=\'failed\';rOrd()">✗ Fail</button><button class="bt rd" style="margin-left:auto;font-size:9px" onclick="delAllOrders()">🗑 Clear All</button></div></div>';
+  h+=ls.map(function(o){
+    var i=O.indexOf(o);
+    var isPend=o.status==="pending";
+    var isConf=o.status==="confirmed"||o.status==="success";
+    var isFail=o.status==="failed";
+    var borderColor=isPend?"var(--yw)":isConf?"var(--gn)":"var(--rd)";
+    var statusBadge=isPend?'<span class="bg pe" style="font-size:8px">⏳ Waiting</span>':isConf?'<span class="bg su" style="font-size:8px">✓ Confirmed</span>':'<span class="bg fa" style="font-size:8px">✗ Failed</span>';
+    // Get real game image from G array (live data), fallback to stored gameImg, then emoji
+    var gData=G.find(function(g){return g.n===o.game;});
+    var gameImg=gData&&gData.img?gData.img:(o.gameImg||"");
+    var gameColor=gData&&gData.c?gData.c:(o.gameColor||"#2563eb");
+    var gameThumb=gameImg
+      ?'<img src="'+gameImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>'
+      :'<span style="font-size:22px">'+(o.gameEmoji||"🎮")+'</span>';
+    return'<div class="li" style="border-left:3px solid '+borderColor+';padding:12px 14px;margin-bottom:2px">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="li-i" style="background:linear-gradient(135deg,'+gameColor+',#1d4ed8);flex-shrink:0;overflow:hidden;border-radius:10px">'+gameThumb+'</div>'
+      +'<div class="li-b">'
+        +'<div class="li-t" style="font-size:13px;font-weight:800">'+o.game+'</div>'
+        +'<div class="li-s" style="font-size:11px">'+o.userId+(o.serverId?' <span style="color:var(--tx3);font-size:9px">Server:'+o.serverId+'</span>':'')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+statusBadge+'<span style="font-size:9px;color:var(--tx3)">'+fd(o.timestamp)+'</span></div>'
+        +(o.dahliaId||o.authName?'<div style="font-size:9px;color:var(--ac);font-weight:700;margin-top:2px">'+(o.dahliaId||'')+(o.authName?' • '+o.authName:'')+'</div>':'')
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-size:13px;font-weight:900;font-family:var(--m);color:var(--ac2)">'+fmtP(o.price)+'</div>'
+        +(isPend
+          ?'<div style="display:flex;gap:3px;margin-top:4px">'
+            +'<button style="padding:5px 8px;border-radius:8px;background:var(--gn);color:#fff;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();aO('+i+',\'confirmed\')">✓</button>'
+            +'<button style="padding:5px 8px;border-radius:8px;background:var(--rd);color:#fff;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();aO('+i+',\'failed\')">✗</button>'
+            +'<button style="padding:5px 8px;border-radius:8px;border:1px solid var(--rd);background:none;color:var(--rd);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();delOrder('+i+')" title="Delete">🗑</button>'
+          +'</div>'
+          :'<div style="display:flex;gap:3px;margin-top:4px">'
+            +'<button style="padding:4px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--sf2);color:var(--tx2);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();vO('+i+')">Edit</button>'
+            +'<button style="padding:4px 8px;border-radius:6px;border:1px solid var(--rd);background:none;color:var(--rd);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();delOrder('+i+')" title="Delete">🗑</button>'
+          +'</div>')
+      +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join("")||'<div class="emp" style="padding:32px;text-align:center;color:var(--tx3)">No orders</div>';
+  h+='</div>';
+  document.getElementById("pg-orders").innerHTML=h;
+}
+
+// Delete a single order permanently
+function delOrder(i){
+  if(!confirm("Delete this order permanently? This cannot be undone."))return;
+  var o=O[i];
+  if(fb&&o.fbId){db.collection("orders").doc(o.fbId).delete();}
+  O.splice(i,1);
+  toast("Order deleted","ok");
+  rOrd();rDash();
+}
+// Delete ALL orders (admin bulk clear)
+function delAllOrders(){
+  var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});
+  if(!ls.length){toast("No orders to delete","in");return;}
+  var label=oF==="all"?"ALL ("+ls.length+") orders":"all "+oF+" orders ("+ls.length+")";
+  if(!confirm("⚠️ Permanently delete "+label+"?\n\nThis cannot be undone."))return;
+  var batch=ls.slice();
+  batch.forEach(function(o){
+    if(fb&&o.fbId){db.collection("orders").doc(o.fbId).delete();}
+    var idx=O.indexOf(o);if(idx>=0)O.splice(idx,1);
+  });
+  toast("Deleted "+batch.length+" orders","ok");
+  rOrd();rDash();
+}
+
+// FIX: Write "confirmed" (not "success") so Store displays "Confirmed" correctly
+function aO(i,s){
+  // Normalize: "success" button now writes "confirmed"
+  var writeStatus=s;
+  O[i].status=writeStatus;
+  if(fb&&O[i].fbId){
+    db.collection("orders").doc(O[i].fbId).update({status:writeStatus});
+    var uid=O[i].authUser||"guest";
+    db.collection("notifications").add({userId:uid,type:writeStatus==="confirmed"?"approved":"rejected",title:writeStatus==="confirmed"?"✅ Order Confirmed!":"❌ Order Rejected",message:O[i].game+" "+O[i].currencyIcon+O[i].amount+" — "+writeStatus,orderId:O[i].txnId||"",read:false,timestamp:new Date().toISOString()});
+  }
+  var tgMsg=writeStatus==="confirmed"?"<b>✅ ORDER CONFIRMED</b>\n\n":"<b>❌ ORDER REJECTED</b>\n\n";
+  tgMsg+="🎮 <b>"+O[i].game+"</b>\n";
+  tgMsg+="📦 "+O[i].currencyIcon+" "+O[i].amount+" "+O[i].currency+"\n";
+  tgMsg+="👤 User: "+O[i].userId+(O[i].serverId?" ("+O[i].serverId+")":"")+"\n";
+  tgMsg+="💰 "+O[i].price+" MMK\n";
+  tgMsg+="💳 "+O[i].payment+"\n";
+  tgMsg+="🔖 #"+O[i].txnId+"\n\n";
+  tgMsg+=writeStatus==="confirmed"?"Items will be delivered shortly! ⚡":"Contact support for help.";
+  sendTgNotify(tgMsg);
+  toast(writeStatus==="confirmed"?"✓ Confirmed!":"✗ Rejected",writeStatus==="confirmed"?"ok":"er");
+  rOrd();rDash();
+}
+function vO(i){var o=O[i];document.getElementById("mTi").textContent="Order Details";var rcp=o.receiptUrl?'<div class="fg"><label>Receipt</label><div class="rcp-img"><img src="'+o.receiptUrl+'" onclick="window.open(this.src)"/></div></div>':'<div class="fg"><label>Receipt</label><div class="rcp-none">No receipt uploaded</div></div>';var usr=o.authUser||"guest";document.getElementById("mBd").innerHTML='<div style="padding:10px;background:rgba(29,78,216,.05);border-radius:10px;border:1px solid rgba(29,78,216,.1);margin-bottom:12px"><div style="font-size:9px;font-weight:700;color:var(--ac);text-transform:uppercase;margin-bottom:4px">Submitted by</div><div style="font-size:13px;font-weight:800">'+usr+'</div></div><div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="confirmed"?" selected":"")+' value="confirmed">confirmed</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div><div class="fg"><div class="rw"><div><label>Game User ID</label><input id="xOU" value="'+o.userId+'"/></div><div><label>Server</label><input id="xOSv" value="'+(o.serverId||"")+'"/></div></div></div>'+rcp+[{l:"Order",v:o.txnId},{l:"Game",v:o.gameEmoji+" "+o.game},{l:"Package",v:o.currencyIcon+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>'}).join("");document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="svO('+i+')">Save</button><button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function svO(i){O[i].status=document.getElementById("xOS").value;O[i].userId=document.getElementById("xOU").value;O[i].serverId=document.getElementById("xOSv").value;if(fb&&O[i].fbId)db.collection("orders").doc(O[i].fbId).update({status:O[i].status,userId:O[i].userId,serverId:O[i].serverId});toast("Saved","ok");rOrd();rDash();cM();}
 function exportCSV(){var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});if(!ls.length){toast("No orders","er");return;}var csv="Order,Game,User,Amount,Price,Payment,Status,Date\n";ls.forEach(function(o){csv+=o.txnId+","+o.game+","+o.userId+","+o.amount+","+o.price+","+o.payment+","+o.status+","+fd(o.timestamp)+"\n";});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="orders.csv";a.click();toast("Exported","ok");}
 
@@ -513,9 +596,14 @@ function checkAndLoadDefaults(){
       DEF_PAYMENTS.forEach(function(p){db.collection("payments").doc(p.n).set(p);});
       DEF_EVENTS.forEach(function(e){db.collection("events").doc(e.title).set(e);});
       DEF_PROMOS.forEach(function(p){db.collection("promos").doc(p.t).set(p);});
+      // Mark setup as done so auto-load never runs again
+      db.collection("config").doc("store").set({setupDone:true},{merge:true});
       G=DEF_GAMES.slice();P=DEF_PAYMENTS.slice();EVT=DEF_EVENTS.slice();PRM=DEF_PROMOS.slice();
       toast("Default data loaded!","ok");
       setTimeout(function(){rDash();rContent();rPay();},1500);
+    }else{
+      // Games exist — mark setup done (protection for future reloads)
+      db.collection("config").doc("store").set({setupDone:true},{merge:true});
     }
   }).catch(function(){});
 }
@@ -532,6 +620,15 @@ db.collection("giveaways").onSnapshot(function(s){GVA=[];s.forEach(function(d){G
   // Listen for pending verifications
   db.collection("verifications").where("status","==","pending").onSnapshot(function(s){VERI=[];s.forEach(function(d){VERI.push(d.data());});if(VERI.length){toast("ID verification pending!","in");}if(cp==="orders")rOrd();},function(){VERI=[];});
 db.collection("orders").orderBy("timestamp","desc").limit(100).onSnapshot(function(s){var old=O.length;O=[];s.forEach(function(d){var x=d.data();x.fbId=d.id;O.push(x);});if(old>0&&O.length>old){playAlert();toast("New order!","in");}if(cp==="dash")rDash();if(cp==="orders")rOrd();document.getElementById("pBdg").textContent=O.filter(function(o){return o.status==="pending"}).length;},function(){O=[];rDash();});
-setTimeout(rDash,1200);setTimeout(checkAndLoadDefaults,2000);}
+setTimeout(rDash,1200);
+// DATA PERSISTENCE FIX: Only auto-load defaults ONCE (use a Firestore flag to prevent overwriting edited data)
+setTimeout(function(){
+  if(!fb||!db)return;
+  db.collection("config").doc("store").get().then(function(d){
+    // Only load defaults if this is a completely fresh setup (no config doc exists AND no games)
+    var hasConfig=d.exists&&d.data()&&d.data().setupDone;
+    if(!hasConfig){checkAndLoadDefaults();}
+  }).catch(function(){checkAndLoadDefaults();});
+},2000);}
 init();
 </script></body></html>
