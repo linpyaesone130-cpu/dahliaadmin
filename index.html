@@ -113,9 +113,36 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 .pwa-btn{width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--ac);background:rgba(29,78,216,.04);color:var(--ac);font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;transition:all .15s;}.pwa-btn:active{transform:scale(.96);}.pwa-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;}
 /* Shimmer for loading states */
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-
+/* Warning Dialog */
+.warn-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;padding:20px;}
+.warn-ov.on{opacity:1;pointer-events:all;}
+.warn-box{background:var(--sf);border-radius:22px;padding:26px 22px;width:100%;max-width:300px;text-align:center;transform:scale(.88);transition:transform .25s cubic-bezier(.34,1.2,.64,1);box-shadow:0 24px 60px rgba(0,0,0,.25);}
+.warn-ov.on .warn-box{transform:scale(1);}
+.warn-ic{width:54px;height:54px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+.warn-ic.red{background:rgba(220,38,38,.1);} .warn-ic.blue{background:rgba(29,78,216,.08);}
+.warn-ic svg{width:26px;height:26px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+.warn-ic.red svg{stroke:var(--rd);} .warn-ic.blue svg{stroke:var(--ac);}
+.warn-ttl{font-size:16px;font-weight:900;color:var(--tx);margin-bottom:6px;}
+.warn-sub{font-size:13px;color:var(--tx2);line-height:1.55;margin-bottom:22px;}
+.warn-row{display:flex;gap:10px;}
+.warn-no{flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);}
+.warn-yes{flex:1;padding:13px;border-radius:13px;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--f);color:#fff;}
+.warn-yes.red{background:var(--rd);} .warn-yes.blue{background:var(--ac);}
 </style></head>
 <body>
+
+<!-- WARNING DIALOG -->
+<div class="warn-ov" id="warnOv">
+  <div class="warn-box">
+    <div class="warn-ic" id="wIc"><svg id="wIcSvg" viewBox="0 0 24 24"></svg></div>
+    <div class="warn-ttl" id="wTtl"></div>
+    <div class="warn-sub" id="wSub"></div>
+    <div class="warn-row">
+      <button class="warn-no" onclick="wNo()">Cancel</button>
+      <button class="warn-yes" id="wYes" onclick="wYes_fn()">Confirm</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ LOGIN ═══ -->
 <div id="adminAuth" class="auth-sc">
@@ -238,7 +265,7 @@ async function genTOTP(secret,time){var key=b32decode(secret);var t=Math.floor((
 async function verify2FA(){var ins=document.querySelectorAll(".otp-in");var code="";ins.forEach(function(i){code+=i.value;});if(code.length!==6){document.getElementById("tfaErr").textContent="Enter all 6 digits";return;}document.getElementById("tfaErr").textContent="Verifying...";try{var now=Math.floor(Date.now()/1000);var valid=false;for(var w=-1;w<=1;w++){if(code===await genTOTP(TOTP_SECRET,now+w*30)){valid=true;break;}}if(valid){enterDash();toast("2FA verified","ok");}else{document.getElementById("tfaErr").textContent="Invalid code";ins.forEach(function(i){i.value="";});ins[0].focus();}}catch(e){document.getElementById("tfaErr").textContent="Error";}}
 function genSecret(){var c="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",s="";for(var i=0;i<16;i++)s+=c[Math.floor(Math.random()*32)];return s;}
 
-var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"Dahlia Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"Dahlia — Fastest game top-up in Myanmar",banners:[]};
+var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"Dahlia Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"Dahlia — Fastest game top-up in Myanmar",banners:[],tgUsername:""};
 var VERI=[];
 // Verify/Reject ID
 function verifyId(i){
@@ -257,7 +284,29 @@ function rejectId(i){
   db.collection("verifications").doc(docId).update({status:"rejected",verifiedBy:adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin"});
   toast("Rejected","er");
 }
-var curUnit="MMK",RATES={MMK:1,USD:0.00048,THB:0.016},SYMS={MMK:"MMK",USD:"$",THB:"฿"};
+// ═══ WARNING DIALOG ═══
+var _wCb=null;
+var _wIcons={
+  del:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>',
+  warn:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  edit:'<path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>'
+};
+function adWarn(opts){
+  // opts: {title, msg, okLabel, type('red'|'blue'), icon('del'|'warn'|'edit'|'lock'), onOk}
+  var t=opts.type||'red';
+  document.getElementById("wIc").className='warn-ic '+t;
+  document.getElementById("wIcSvg").innerHTML=_wIcons[opts.icon||'warn'];
+  document.getElementById("wTtl").textContent=opts.title||"Are you sure?";
+  document.getElementById("wSub").textContent=opts.msg||"This action cannot be undone.";
+  document.getElementById("wYes").textContent=opts.okLabel||"Confirm";
+  document.getElementById("wYes").className='warn-yes '+t;
+  _wCb=opts.onOk||null;
+  document.getElementById("warnOv").classList.add("on");
+}
+function wYes_fn(){document.getElementById("warnOv").classList.remove("on");if(_wCb){_wCb();_wCb=null;}}
+function wNo(){document.getElementById("warnOv").classList.remove("on");_wCb=null;}
+document.getElementById("warnOv").addEventListener("click",function(e){if(e.target===this)wNo();});
 function fmtP(v){if(curUnit==="MMK")return v.toLocaleString()+" MMK";var c=v*RATES[curUnit];return SYMS[curUnit]+(curUnit==="USD"?c.toFixed(2):Math.round(c).toLocaleString());}
 function fd(t){if(!t)return"-";var d=new Date(t);return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});}
 function toast(m,t){var e=document.getElementById("tst");var ic={ok:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',er:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',"in":'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};e.innerHTML=(ic[t]||ic["in"])+"<span>"+m+"</span>";e.className="tst "+(t||"in")+" v";setTimeout(function(){e.className="tst"},2400);}
@@ -571,7 +620,7 @@ function viewUser(email){
 
 var pendingSecret="";
 function rSet(){var tfs=twoFaEnabled?'<span class="bg su" style="font-size:10px">Active</span>':'<span class="bg" style="font-size:10px;background:var(--sf2)">Off</span>';var h='<div class="stc"><div class="stc-t" style="color:var(--gn)"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>2FA — Google Authenticator</div><div class="str"><div><div class="stl">Status</div></div>'+tfs+'</div>';if(!twoFaEnabled){h+='<div class="str" style="flex-direction:column;align-items:stretch"><div class="stl" style="margin-bottom:6px">Setup 2FA</div><div style="font-size:10px;color:var(--tx3);margin-bottom:8px">1. Install Google Authenticator<br/>2. Generate Secret below<br/>3. Scan QR code<br/>4. Enter code to activate</div><button class="bt gn" style="width:100%;justify-content:center" onclick="setup2FA()">Generate Secret Key</button></div><div id="tfaSetup" style="display:none"><div class="stl" style="margin:8px 0 4px">Secret Key</div><div class="secret-row"><code id="tfaSecret"></code><button class="bt" onclick="navigator.clipboard.writeText(document.getElementById(\'tfaSecret\').textContent);toast(\'Copied\',\'ok\')">Copy</button></div><div class="stl" style="margin-bottom:4px">QR Code</div><div class="qr-wrap"><img id="tfaQR"/></div><div class="stl" style="margin:8px 0 4px">Verify to Activate</div><div style="display:flex;gap:6px"><input id="tfaVerify" placeholder="6-digit code" maxlength="6" inputmode="numeric" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--bd);font-size:14px;font-family:var(--m);outline:none"/><button class="bt gn" onclick="activate2FA()">Activate</button></div><div id="tfaSetupErr" class="auth-err"></div></div>';}else{h+='<div class="str"><div><div class="stl">Disable 2FA</div></div><button class="bt rd" onclick="disable2FA()">Disable</button></div>';}
-h+='</div><div class="stc"><div class="stc-t">Store</div><div class="str"><div class="stl">Logo</div><button class="bt pr" onclick="uploadCfgImg(&quot;logoImg&quot;)" style="font-size:10px">Upload Logo</button></div><div class="str"><div class="stl">Name</div><input class="sti" value="'+CFG.name+'" onchange="CFG.name=this.value;svC()"/></div><div class="str"><div class="stl">Currency</div><input class="sti" value="'+CFG.cur+'" style="width:80px" onchange="CFG.cur=this.value;svC()"/></div><div class="str"><div class="stl">Hero Banner</div><button class="bt bl" onclick="uploadCfgImg(&quot;heroImg&quot;)" style="font-size:10px">Upload</button>'+(CFG.heroImg?'<img src="'+CFG.heroImg+'" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-left:6px"/>':'')+'</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Title</div><input class="sti" value="'+(CFG.heroTitle||"")+'" onchange="CFG.heroTitle=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Subtitle</div><input class="sti" value="'+(CFG.heroSub||"")+'" onchange="CFG.heroSub=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Carousel Banners</div><button class="bt bl" onclick="uploadBanner()" style="font-size:10px;margin-bottom:6px">+ Add</button><button class="bt" onclick="viewBanners()" style="font-size:10px;margin-bottom:6px;margin-left:4px">View/Delete</button><div id="bannerPrev" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'+(CFG.banners&&CFG.banners.length?CFG.banners.length+" banner(s)":"No banners")+'</div><div style="font-size:8px;color:var(--tx3)">Tap + to add banner images</div></div><div class="str"><div><div class="stl">Auto-Approve</div></div><label class="tgl"><input type="checkbox" '+(CFG.autoApprove?"checked":"")+' onchange="CFG.autoApprove=this.checked;svC()"/><span class="ts"></span></label></div></div>';
+h+='</div><div class="stc"><div class="stc-t">Store</div><div class="str"><div class="stl">Logo</div><button class="bt pr" onclick="uploadCfgImg(&quot;logoImg&quot;)" style="font-size:10px">Upload Logo</button></div><div class="str"><div class="stl">Name</div><input class="sti" value="'+CFG.name+'" onchange="CFG.name=this.value;svC()"/></div><div class="str"><div class="stl">Currency</div><input class="sti" value="'+CFG.cur+'" style="width:80px" onchange="CFG.cur=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl" style="margin-bottom:6px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:#26A6E2"><path d="M21.2 4.4L2.4 11.5c-.6.2-.6.7 0 .9l4.8 1.5 1.8 5.8c.2.5.7.5 1 .2l2.6-2.1 5.1 3.7c.5.4 1.1.1 1.2-.5L22.3 5.3c.2-.7-.4-1.2-1.1-.9z"/></svg>Telegram Support Username</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:700;color:var(--tx3);">@</span><input class="sti" placeholder="username (without @)" value="'+(CFG.tgUsername||"")+'" onchange="CFG.tgUsername=this.value.replace(/@/g,\'\').trim();svC()" style="flex:1"/></div><div style="font-size:9px;color:var(--tx3);margin-top:4px">Shown in FAQ page → Contact button</div></div><div class="str"><div class="stl">Hero Banner</div><button class="bt bl" onclick="uploadCfgImg(&quot;heroImg&quot;)" style="font-size:10px">Upload</button>'+(CFG.heroImg?'<img src="'+CFG.heroImg+'" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-left:6px"/>':'')+'</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Title</div><input class="sti" value="'+(CFG.heroTitle||"")+'" onchange="CFG.heroTitle=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Subtitle</div><input class="sti" value="'+(CFG.heroSub||"")+'" onchange="CFG.heroSub=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Carousel Banners</div><button class="bt bl" onclick="uploadBanner()" style="font-size:10px;margin-bottom:6px">+ Add</button><button class="bt" onclick="viewBanners()" style="font-size:10px;margin-bottom:6px;margin-left:4px">View/Delete</button><div id="bannerPrev" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'+(CFG.banners&&CFG.banners.length?CFG.banners.length+" banner(s)":"No banners")+'</div><div style="font-size:8px;color:var(--tx3)">Tap + to add banner images</div></div><div class="str"><div><div class="stl">Auto-Approve</div></div><label class="tgl"><input type="checkbox" '+(CFG.autoApprove?"checked":"")+' onchange="CFG.autoApprove=this.checked;svC()"/><span class="ts"></span></label></div></div>';
 h+='<div class="stc"><div class="stc-t">Notifications</div><div class="str"><div class="stl">Sound</div><label class="tgl"><input type="checkbox" '+(sndEnabled?"checked":"")+' onchange="sndEnabled=this.checked"/><span class="ts"></span></label></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="playAlert();toast(\'Played\',\'ok\')">Play</button></div></div>';
 h+='<div class="stc"><div class="stc-t" style="color:var(--blu)">Telegram</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Bot Token</div><input class="sti" value="'+TG_BOT+'" placeholder="123456:ABC..." onchange="TG_BOT=this.value"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Chat ID</div><input class="sti" value="'+TG_CHAT+'" placeholder="-100123..." onchange="TG_CHAT=this.value"/></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="sendTgNotify(\'Test!\');toast(\'Sent\',\'ok\')">Send</button></div></div>';
 h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div class="stl">'+FC.projectId+'</div><span class="bg '+(fb?"su":"fa")+'" style="font-size:10px">'+(fb?"Online":"Offline")+'</span></div><div class="str"><div class="stl">Sync</div><button class="bt pr" onclick="syncAll()">Sync All</button></div><div class="str"><div class="stl">Defaults</div><button class="bt yw" onclick="loadDefaults()">Load Defaults</button></div></div>';
