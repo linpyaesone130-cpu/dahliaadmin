@@ -255,7 +255,18 @@ document.addEventListener("keydown",function(e){if(e.key==="Enter"){if(document.
 // 2FA
 var TOTP_SECRET="",twoFaEnabled=false;
 function check2FA(){if(!fb||!db){enterDash();return;}db.collection("config").doc("2fa").get().then(function(d){if(d.exists&&d.data().enabled&&d.data().secret){TOTP_SECRET=d.data().secret;twoFaEnabled=true;document.getElementById("adminAuth").style.display="none";document.getElementById("twoFaScreen").style.display="flex";document.querySelectorAll(".otp-in")[0].focus();}else{enterDash();}}).catch(function(){enterDash();});}
-function enterDash(){document.getElementById("adminAuth").style.display="none";document.getElementById("twoFaScreen").style.display="none";document.getElementById("adminApp").style.display="block";var who=adAuth&&adAuth.currentUser?adAuth.currentUser.email.split("@")[0]:"Admin";document.querySelector(".av").textContent=who.substring(0,2).toUpperCase();toast("Welcome, "+who+"!","ok");}
+function enterDash(){
+  document.getElementById("adminAuth").style.display="none";
+  document.getElementById("twoFaScreen").style.display="none";
+  document.getElementById("adminApp").style.display="block";
+  var who=adAuth&&adAuth.currentUser?adAuth.currentUser.email.split("@")[0]:"Admin";
+  document.querySelector(".av").textContent=who.substring(0,2).toUpperCase();
+  toast("Welcome, "+who+"!","ok");
+  // Render dashboard immediately with whatever data exists (O/G may be empty - that's fine)
+  rDash();
+  // Start/restart Firebase listeners
+  if(!window._adminInited){window._adminInited=true;init();}
+}
 function back2Login(){if(adAuth)adAuth.signOut();document.getElementById("twoFaScreen").style.display="none";document.getElementById("adminAuth").style.display="flex";document.getElementById("tfaErr").textContent="";document.querySelectorAll(".otp-in").forEach(function(i){i.value="";});}
 function otpNav(el,i){var ins=document.querySelectorAll(".otp-in");if(el.value&&i<5)ins[i+1].focus();if(i===5&&el.value)verify2FA();}
 function otpDel(e,i){if(e.key==="Backspace"&&!e.target.value&&i>0)document.querySelectorAll(".otp-in")[i-1].focus();}
@@ -679,24 +690,10 @@ function loadDefaults(){
   rDash();
 }
 // Auto-load defaults if Firebase is empty
+// checkAndLoadDefaults disabled — use "Load Defaults" button in Settings manually
 function checkAndLoadDefaults(){
-  if(!fb||!db)return;
-  db.collection("games").get().then(function(s){
-    if(s.empty){
-      DEF_GAMES.forEach(function(g){db.collection("games").doc(g.n).set(g);});
-      DEF_PAYMENTS.forEach(function(p){db.collection("payments").doc(p.n).set(p);});
-      DEF_EVENTS.forEach(function(e){db.collection("events").doc(e.title).set(e);});
-      DEF_PROMOS.forEach(function(p){db.collection("promos").doc(p.t).set(p);});
-      // Mark setup as done so auto-load never runs again
-      db.collection("config").doc("store").set({setupDone:true},{merge:true});
-      G=DEF_GAMES.slice();P=DEF_PAYMENTS.slice();EVT=DEF_EVENTS.slice();PRM=DEF_PROMOS.slice();
-      toast("Default data loaded!","ok");
-      setTimeout(function(){rDash();rContent();rPay();},1500);
-    }else{
-      // Games exist — mark setup done (protection for future reloads)
-      db.collection("config").doc("store").set({setupDone:true},{merge:true});
-    }
-  }).catch(function(){});
+  // DISABLED: Auto-load removed to prevent overwriting edited data
+  // Use Settings → Firebase → "Load Defaults" button if needed
 }
 if('serviceWorker' in navigator){navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",function(e){e.respondWith(fetch(e.request).catch(function(){return new Response("Offline")}))})').catch(function(){});}
 var deferredPrompt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
@@ -710,16 +707,7 @@ db.collection("promos").onSnapshot(function(s){PRM=[];s.forEach(function(d){PRM.
 db.collection("giveaways").onSnapshot(function(s){GVA=[];s.forEach(function(d){GVA.push(d.data());});if(cp==="content")rContent();},function(){});
   // Listen for pending verifications
   db.collection("verifications").where("status","==","pending").onSnapshot(function(s){VERI=[];s.forEach(function(d){VERI.push(d.data());});if(VERI.length){toast("ID verification pending!","in");}if(cp==="orders")rOrd();},function(){VERI=[];});
-db.collection("orders").orderBy("timestamp","desc").limit(100).onSnapshot(function(s){var old=O.length;O=[];s.forEach(function(d){var x=d.data();x.fbId=d.id;O.push(x);});if(old>0&&O.length>old){playAlert();toast("New order!","in");}if(cp==="dash")rDash();if(cp==="orders")rOrd();document.getElementById("pBdg").textContent=O.filter(function(o){return o.status==="pending"}).length;},function(){O=[];rDash();});
-setTimeout(rDash,1200);
-// DATA PERSISTENCE FIX: Only auto-load defaults ONCE (use a Firestore flag to prevent overwriting edited data)
-setTimeout(function(){
-  if(!fb||!db)return;
-  db.collection("config").doc("store").get().then(function(d){
-    // Only load defaults if this is a completely fresh setup (no config doc exists AND no games)
-    var hasConfig=d.exists&&d.data()&&d.data().setupDone;
-    if(!hasConfig){checkAndLoadDefaults();}
-  }).catch(function(){checkAndLoadDefaults();});
-},2000);}
-init();
+db.collection("orders").limit(100).onSnapshot(function(s){var old=O.length;O=[];s.forEach(function(d){var x=d.data();x.fbId=d.id;O.push(x);});O.sort(function(a,b){return(b.timestamp||"")>(a.timestamp||"")?1:-1;});if(old>0&&O.length>old){playAlert();toast("New order!","in");}if(cp==="dash")rDash();if(cp==="orders")rOrd();document.getElementById("pBdg").textContent=O.filter(function(o){return o.status==="pending"}).length;},function(){O=[];rDash();});
+}
+// init() is now called from enterDash() after login
 </script></body></html>
