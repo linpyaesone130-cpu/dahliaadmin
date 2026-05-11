@@ -597,7 +597,10 @@ function reT(){
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:10px">';
   h+=list.map(function(ev){
     var idx=EVT.indexOf(ev);
-    var img=ev.img?'<img src="'+ev.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;position:absolute;inset:0;background:'+ev.bg+'">'+ev.emoji+'</div>';
+    var skl='<div style="width:100%;height:100%;position:absolute;inset:0;background:linear-gradient(90deg,var(--sf2) 25%,var(--bd) 50%,var(--sf2) 75%);background-size:400px 100%;animation:shimmer 1.4s infinite"></div>';
+    var img=ev.img
+      ?skl+'<img src="'+ev.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      :skl;
     var bdgC=ev.badge==="live"?"var(--gn)":ev.badge==="new"?"var(--blu)":"var(--yw)";
     return'<div style="border-radius:12px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer" onclick="eEv('+idx+')">'
       +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+img+'<span style="position:absolute;top:6px;right:6px;padding:2px 6px;border-radius:4px;font-size:7px;font-weight:800;text-transform:uppercase;color:#fff;background:'+bdgC+'">'+ev.badge+'</span></div>'
@@ -614,7 +617,10 @@ function rpT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Account ('+PRM.length+')</div><button class="bt gn" onclick="ePrm(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:10px">';
   h+=PRM.map(function(p,i){
-    var img=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;position:absolute;inset:0;background:linear-gradient(135deg,#059669,#10b981)">'+p.x+'</div>';
+    var skl='<div style="width:100%;height:100%;position:absolute;inset:0;background:linear-gradient(90deg,var(--sf2) 25%,var(--bd) 50%,var(--sf2) 75%);background-size:400px 100%;animation:shimmer 1.4s infinite"></div>';
+    var img=p.img
+      ?skl+'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      :skl;
     return'<div style="border-radius:12px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer" onclick="ePrm('+i+')">'
       +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+img+'</div>'
       +'<div style="padding:8px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.t+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+(p.game||p.d)+'</div>'
@@ -750,7 +756,10 @@ function rgvT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Giveaways ('+GVA.length+')</div><button class="bt yw" onclick="eGv(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:10px">';
   h+=GVA.map(function(g,i){
-    var img=g.img?'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;position:absolute;inset:0;background:linear-gradient(135deg,#1d4ed8,#ec4899)"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:#fff;fill:none"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/></svg></div>';
+    var skl='<div style="width:100%;height:100%;position:absolute;inset:0;background:linear-gradient(90deg,var(--sf2) 25%,var(--bd) 50%,var(--sf2) 75%);background-size:400px 100%;animation:shimmer 1.4s infinite"></div>';
+    var img=g.img
+      ?skl+'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      :skl;
     return'<div style="border-radius:12px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer" onclick="eGv('+i+')"><div style="width:100%;aspect-ratio:1;position:relative;overflow:hidden">'+img+'</div><div style="padding:8px"><div style="font-size:11px;font-weight:800">'+g.t+'</div><div style="font-size:9px;color:var(--tx3)">'+g.game+' • '+g.prize+'</div><div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--blu);width:24px;height:24px" onclick="event.stopPropagation();eGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px" onclick="event.stopPropagation();dGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No giveaways</div>';
   h+='</div></div>';return h;
@@ -761,22 +770,59 @@ function dGv(i){if(!confirm("Delete?"))return;if(fb)db.collection("giveaways").d
 
 var usrSearch="";
 function rUsers(){
-  var um={};O.forEach(function(o){var u=o.authUser||o.userId||"guest";if(u==="guest"&&!um["guest"])um["guest"]={id:"guest",did:"",nm:"Guest",uid:"",cnt:0,sp:0,last:"",games:{},gameIds:[],method:"",avatar:""};if(!um[u])um[u]={id:u,did:o.pcaId||"",nm:o.authName||"",uid:o.userId||"",cnt:0,sp:0,last:o.timestamp,games:{},gameIds:[],method:"",avatar:""};um[u].cnt++;if(o.status==="success")um[u].sp+=o.price;um[u].games[o.game]=1;if(o.userId&&um[u].gameIds.indexOf(o.userId)===-1)um[u].gameIds.push(o.userId);if(o.timestamp>um[u].last)um[u].last=o.timestamp;if(o.pcaId)um[u].did=o.pcaId;if(o.authName)um[u].nm=o.authName;});
-  var ul=Object.values(um).sort(function(a,b){return b.sp-a.sp;});
+  var um={};
+  O.forEach(function(o){
+    var u=o.authUser||"__guest__";
+    if(!um[u]){
+      if(u==="__guest__"){
+        um[u]={id:"__guest__",did:"",nm:"Guest",uid:"",cnt:0,sp:0,last:"",games:{},gameIds:[],method:"guest",avatar:""};
+      } else {
+        um[u]={id:u,did:o.pcaId||"",nm:o.authName||"",uid:"",cnt:0,sp:0,last:o.timestamp||"",games:{},gameIds:[],method:"",avatar:""};
+      }
+    }
+    um[u].cnt++;
+    if(o.status==="success")um[u].sp+=o.price;
+    um[u].games[o.game]=1;
+    if(o.userId&&um[u].gameIds.indexOf(o.userId)===-1)um[u].gameIds.push(o.userId);
+    if(o.timestamp&&o.timestamp>um[u].last)um[u].last=o.timestamp;
+    if(o.pcaId&&u!=="__guest__")um[u].did=o.pcaId;
+    if(o.authName&&u!=="__guest__")um[u].nm=o.authName;
+  });
+  // Always show Guest row if not in orders (0 orders)
+  if(!um["__guest__"])um["__guest__"]={id:"__guest__",did:"",nm:"Guest",uid:"",cnt:0,sp:0,last:"",games:{},gameIds:[],method:"guest",avatar:""};
+  var ul=Object.values(um).sort(function(a,b){
+    if(a.id==="__guest__")return 1;
+    if(b.id==="__guest__")return -1;
+    return b.sp-a.sp;
+  });
   if(usrSearch){var q=usrSearch.toLowerCase();ul=ul.filter(function(u){return u.id.toLowerCase().indexOf(q)>=0||u.did.toLowerCase().indexOf(q)>=0||u.nm.toLowerCase().indexOf(q)>=0;});}
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Users ('+ul.length+')</div></div><div style="padding:8px 10px;border-bottom:1px solid var(--bd)"><input style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--sf2);font-size:11px;font-family:var(--f);outline:none" placeholder="Search ID, name, email..." value="'+usrSearch+'" oninput="usrSearch=this.value;rUsers()"/></div>';
-  h+=ul.map(function(u){var isG=u.method==="google.com";var badge=isG?'<svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:#1d9bf0;vertical-align:-1px;margin-left:2px"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5a.749.749 0 01-1.041.208l-.115-.094-2.415-2.415a.749.749 0 111.06-1.06l1.77 1.767 3.825-5.74a.75.75 0 011.25.833z"/></svg>':'';return'<div class="li" style="cursor:pointer;padding:10px;margin-bottom:4px" onclick="viewUser(\''+u.id+'\')"><div class="li-i" style="background:linear-gradient(135deg,var(--ac),#6366f1);color:#fff;font-weight:800;font-size:9px;overflow:hidden">'+(u.avatar&&u.avatar.indexOf("img")>=0?u.avatar:u.id.substring(0,2).toUpperCase())+'</div><div class="li-b"><div class="li-t">'+(u.nm||u.id.split("@")[0])+badge+'</div><div class="li-s" style="font-family:var(--m)">'+(u.did||"—")+'</div><div style="font-size:8px;color:var(--tx3)">'+u.cnt+' orders</div></div><div class="li-r"><div class="li-v">'+fmtP(u.sp)+'</div></div></div>'}).join("")||'<div class="emp">No users</div>';
+  h+=ul.map(function(u){
+    var isGuest=u.id==="__guest__";
+    var isG=u.method==="google.com";
+    var badge=isG?'<svg viewBox="0 0 24 24" style="width:10px;height:10px;fill:#1d9bf0;vertical-align:-1px;margin-left:2px"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5a.749.749 0 01-1.041.208l-.115-.094-2.415-2.415a.749.749 0 111.06-1.06l1.77 1.767 3.825-5.74a.75.75 0 011.25.833z"/></svg>':'';
+    var avatarBg=isGuest?"background:var(--sf2);border:1.5px dashed var(--bd)":"background:linear-gradient(135deg,var(--ac),#6366f1)";
+    var avatarContent=isGuest
+      ?'<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--tx3);fill:none;stroke-width:1.7"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+      :(u.id.substring(0,2).toUpperCase());
+    var displayName=isGuest?"Guest (Not Logged In)":(u.nm||u.id.split("@")[0]);
+    return'<div class="li" style="cursor:pointer;padding:10px;margin-bottom:4px'+(isGuest?";opacity:0.75":"")+'" onclick="viewUser(\''+u.id+'\')"><div class="li-i" style="'+avatarBg+';color:'+(isGuest?"var(--tx3)":"#fff")+';font-weight:800;font-size:9px;overflow:hidden">'+avatarContent+'</div><div class="li-b"><div class="li-t">'+displayName+badge+'</div><div class="li-s" style="font-family:var(--m)">'+(u.did||"—")+'</div><div style="font-size:8px;color:var(--tx3)">'+u.cnt+' orders</div></div><div class="li-r"><div class="li-v">'+(u.sp>0?fmtP(u.sp):"—")+'</div></div></div>';
+  }).join("")||'<div class="emp">No users</div>';
   h+='</div>';document.getElementById("pg-users").innerHTML=h;
 }
 function viewUser(email){
   document.getElementById("mTi").textContent="User Details";
-  var uOrders=O.filter(function(o){return o.authUser===email});
+  var isGuest=email==="__guest__";
+  var uOrders=O.filter(function(o){
+    return isGuest?(!o.authUser||o.authUser===""):o.authUser===email;
+  });
   var sp=0;uOrders.forEach(function(o){if(o.status==="success")sp+=o.price;});
   var did=uOrders.length&&uOrders[0].pcaId?uOrders[0].pcaId:"—";
-  var nm=uOrders.length&&uOrders[0].authName?uOrders[0].authName:"";
+  var nm=isGuest?"Guest (Not Logged In)":(uOrders.length&&uOrders[0].authName?uOrders[0].authName:"");
   var gameIds=[];uOrders.forEach(function(o){if(o.userId&&gameIds.indexOf(o.game+":"+o.userId)===-1)gameIds.push(o.game+":"+o.userId);});
-  var h='<div style="padding:12px;background:rgba(29,78,216,.05);border-radius:10px;border:1px solid rgba(29,78,216,.1);margin-bottom:12px;text-align:center"><div style="font-size:20px;font-weight:900;color:var(--ac)">'+did+'</div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(nm||email.split("@")[0])+'</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">'+email+'</div></div>';
-  if(fb&&db){db.collection("users").doc(email).get().then(function(d){
+  var displayEmail=isGuest?"No Account":email;
+  var h='<div style="padding:12px;background:rgba(29,78,216,.05);border-radius:10px;border:1px solid rgba(29,78,216,.1);margin-bottom:12px;text-align:center"><div style="font-size:20px;font-weight:900;color:var(--ac)">'+did+'</div><div style="font-size:13px;font-weight:700;margin-top:4px">'+(nm||displayEmail.split("@")[0])+'</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">'+displayEmail+'</div></div>';
+  if(fb&&db&&!isGuest){db.collection("users").doc(email).get().then(function(d){
     if(d.exists){var u=d.data();h+='<div style="font-size:9px;font-weight:800;color:var(--ac);text-transform:uppercase;margin-bottom:6px">Account</div>';[{l:"PCA Store ID",v:u.pcaId||did},{l:"Login",v:u.loginMethod||"—"},{l:"Joined",v:fd(u.joined)},{l:"Last Seen",v:fd(u.lastSeen)}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});
     h+='<div style="font-size:9px;font-weight:800;color:var(--blu);text-transform:uppercase;margin:10px 0 6px">Device</div>';[{l:"Device",v:u.device||"—"},{l:"Screen",v:u.screenSize||"—"},{l:"Language",v:u.language||"—"}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});}
     if(gameIds.length){h+='<div style="font-size:9px;font-weight:800;color:var(--gn);text-transform:uppercase;margin:10px 0 6px">Game IDs</div>';gameIds.forEach(function(g){var p=g.split(":");h+='<div class="mr"><span class="ml">'+p[0]+'</span><span class="mv" style="font-family:var(--m)">'+p[1]+'</span></div>';});}
@@ -784,6 +830,13 @@ function viewUser(email){
     if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=o.status==="success"?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
     document.getElementById("mBd").innerHTML=h;document.getElementById("mFt").innerHTML='<button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");
   }).catch(function(){document.getElementById("mBd").innerHTML=h+'<div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div>';document.getElementById("mFt").innerHTML='<button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");});}
+  else {
+    // Guest: no Firebase account, show orders directly
+    if(gameIds.length){h+='<div style="font-size:9px;font-weight:800;color:var(--gn);text-transform:uppercase;margin:10px 0 6px">Game IDs</div>';gameIds.forEach(function(g){var p=g.split(":");h+='<div class="mr"><span class="ml">'+p[0]+'</span><span class="mv" style="font-family:var(--m)">'+p[1]+'</span></div>';});}
+    h+='<div style="font-size:9px;font-weight:800;color:var(--yw);text-transform:uppercase;margin:10px 0 6px">Stats</div><div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div><div class="mr"><span class="ml">Spent</span><span class="mv" style="color:var(--ac);font-weight:900">'+(sp>0?fmtP(sp):"—")+'</span></div>';
+    if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=o.status==="success"?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
+    document.getElementById("mBd").innerHTML=h;document.getElementById("mFt").innerHTML='<button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");
+  }
 }
 
 var pendingSecret="";
