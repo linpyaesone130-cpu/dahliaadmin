@@ -324,6 +324,7 @@ function genSecret(){var c="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",s="";for(var i=0;i
 
 var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"PCA Store Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"PCA Store — Fastest game top-up in Myanmar",banners:[],tgUsername:""};
 var VERI=[];
+var curUnit="MMK",RATES={USD:0.00048,THB:0.017},SYMS={USD:"$",THB:"฿"};
 // Verify/Reject ID
 function verifyId(i){
   var v=VERI[i];if(!v)return;
@@ -518,7 +519,10 @@ function rgT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Games ('+G.length+')</div><button class="bt pr" onclick="eG(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:10px">';
   h+=G.map(function(g,i){
-    var img=g.img?'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;position:absolute;inset:0;background:linear-gradient(135deg,'+g.c+',#1d4ed8)">'+g.e+'</div>';
+    var skl='<div style="width:100%;height:100%;position:absolute;inset:0;background:linear-gradient(90deg,var(--sf2) 25%,var(--bd) 50%,var(--sf2) 75%);background-size:400px 100%;animation:shimmer 1.4s infinite"></div>';
+    var img=g.img
+      ?skl+'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      :skl;
     return'<div style="border-radius:12px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer" onclick="eG('+i+')">'
       +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+img+'</div>'
       +'<div style="padding:8px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+g.n+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+g.cur+' • '+g.pl+' • '+g.pr.length+' pkgs</div>'
