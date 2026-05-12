@@ -651,19 +651,20 @@ function subVerify(){
 }
 function refreshVeri(){subVerify();}
 function delOrder(i){
-  if(!confirm("Delete this order permanently? This cannot be undone."))return;
-  var o=O[i];
-  if(fb&&o.fbId){db.collection("orders").doc(o.fbId).delete();}
-  O.splice(i,1);
-  toast("Order deleted","ok");
-  rOrd();rDash();
+  adWarn({title:"Delete Order?",msg:"Permanently delete this order? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){
+    var o=O[i];
+    if(fb&&o.fbId){db.collection("orders").doc(o.fbId).delete();}
+    O.splice(i,1);
+    toast("Order deleted","ok");
+    rOrd();rDash();
+  }});
 }
 // Delete ALL orders (admin bulk clear)
 function delAllOrders(){
   var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});
   if(!ls.length){toast("No orders to delete","in");return;}
   var label=oF==="all"?"ALL ("+ls.length+") orders":"all "+oF+" orders ("+ls.length+")";
-  if(!confirm("⚠️ Permanently delete "+label+"?\n\nThis cannot be undone."))return;
+  adWarn({title:"Delete All Orders?",msg:"Permanently delete "+label+". This cannot be undone.",okLabel:"Delete All",type:"red",icon:"warn",onOk:function(){
   var batch=ls.slice();
   batch.forEach(function(o){
     if(fb&&o.fbId){db.collection("orders").doc(o.fbId).delete();}
@@ -671,6 +672,7 @@ function delAllOrders(){
   });
   toast("Deleted "+batch.length+" orders","ok");
   rOrd();rDash();
+  }});
 }
 
 // FIX: Write "confirmed" (not "success") so Store displays "Confirmed" correctly
