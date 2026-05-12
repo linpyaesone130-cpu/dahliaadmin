@@ -143,6 +143,27 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
 .warn-no{flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);}
 .warn-yes{flex:1;padding:13px;border-radius:13px;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--f);color:#fff;}
 .warn-yes.red{background:var(--rd);} .warn-yes.blue{background:var(--ac);}
+/* Calendar */
+.cal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:.2s;padding-bottom:env(safe-area-inset-bottom,0);}
+.cal-ov.on{opacity:1;pointer-events:all;}
+.cal-box{background:var(--sf);border-radius:22px 22px 0 0;padding:20px 18px 30px;width:100%;max-width:430px;transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1,.64,1);border-top:1px solid var(--bd2);}
+.cal-ov.on .cal-box{transform:translateY(0);}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav-btn{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cal-nav-btn svg{width:14px;height:14px;stroke:var(--tx2);fill:none;stroke-width:2;}
+.cal-month{font-size:14px;font-weight:900;color:var(--tx);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dh{font-size:9px;font-weight:800;color:var(--tx3);text-transform:uppercase;text-align:center;padding:4px 0;}
+.cal-day{aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;position:relative;transition:all .15s;color:var(--tx);}
+.cal-day:active{transform:scale(.88);}
+.cal-day.today{background:rgba(0,102,255,.12);color:var(--ac);font-weight:900;}
+.cal-day.sel{background:var(--ac);color:#fff;}
+.cal-day.has-ord::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--gn);}
+.cal-day.sel::after{background:#fff;}
+.cal-day.empty{pointer-events:none;}
+.cal-day.future{color:var(--bd2);pointer-events:none;}
+.cal-result{margin-top:14px;background:var(--sf2);border-radius:14px;padding:14px;border:1px solid var(--bd);}
+.cal-result-hd{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--tx3);letter-spacing:.4px;margin-bottom:8px;}
 </style></head>
 <body>
 
@@ -156,6 +177,35 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <button class="warn-no" onclick="wNo()">Cancel</button>
       <button class="warn-yes" id="wYes" onclick="wYes_fn()">Confirm</button>
     </div>
+  </div>
+</div>
+
+<!-- PROMPT DIALOG -->
+<div class="warn-ov" id="promptOv">
+  <div class="warn-box">
+    <div class="warn-ic" id="prIc"><svg id="prIcSvg" viewBox="0 0 24 24"></svg></div>
+    <div class="warn-ttl" id="prTtl"></div>
+    <div class="warn-sub" id="prSub" style="margin-bottom:12px"></div>
+    <input id="prInp" class="fg" style="width:100%;padding:11px 14px;border-radius:var(--r);border:1.5px solid var(--bd);background:var(--sf2);font-size:14px;font-family:var(--f);color:var(--tx);outline:none;margin-bottom:16px;transition:.2s" />
+    <div class="warn-row">
+      <button class="warn-no" onclick="prNo()">Cancel</button>
+      <button class="warn-yes" id="prYes" onclick="prYes_fn()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR OVERLAY -->
+<div class="cal-ov" id="calOv">
+  <div class="cal-box">
+    <div style="width:40px;height:4px;border-radius:4px;background:var(--bd2);margin:0 auto 16px;"></div>
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calMove(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <span class="cal-month" id="calMonthLbl"></span>
+      <button class="cal-nav-btn" onclick="calMove(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-result" id="calResult" style="display:none"></div>
+    <button style="width:100%;margin-top:14px;padding:12px;border-radius:13px;border:none;background:var(--sf2);color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f)" onclick="calClose()">Close</button>
   </div>
 </div>
 
@@ -367,13 +417,23 @@ var curUnit="MMK",RATES={USD:0.00048,THB:0.017},SYMS={USD:"$",THB:"฿"};
 // Verify/Reject ID
 function verifyId(i){
   var v=VERI[i];if(!v)return;
-  var name=prompt("Enter in-game name for "+v.game+" ID: "+v.gameId);
-  if(!name)return;
-  var docId=v.gameId+"_"+v.game.replace(/\s/g,"");
-  db.collection("verifications").doc(docId).update({status:"verified",verifiedName:name,verifiedBy:adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin",verifiedAt:new Date().toISOString()});
-  toast("Verified: "+name,"ok");
-  sendTgNotify("<b>✅ ID Verified</b>\n"+v.game+" • "+v.gameId+"\nName: "+name+"\nBy: "+(v.pcaId||v.authUser));
-  VERI.splice(i,1);rVerify();
+  // Custom input modal အစား adWarn ကိုမသုံးဘဲ custom prompt modal သုံး
+  adPrompt({
+    title:"Verify ID",
+    msg:v.game+" • ID: <b style='font-family:var(--m);color:var(--ac)'>"+v.gameId+"</b>",
+    placeholder:"Enter in-game name",
+    okLabel:"Verify",
+    type:"blue",
+    icon:"lock",
+    onOk:function(name){
+      if(!name){toast("Name required","er");return;}
+      var docId=v.gameId+"_"+v.game.replace(/\s/g,"");
+      db.collection("verifications").doc(docId).update({status:"verified",verifiedName:name,verifiedBy:adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin",verifiedAt:new Date().toISOString()});
+      toast("Verified: "+name,"ok");
+      sendTgNotify("<b>✅ ID Verified</b>\n"+v.game+" • "+v.gameId+"\nName: "+name+"\nBy: "+(v.pcaId||v.authUser));
+      VERI.splice(i,1);rVerify();
+    }
+  });
 }
 function rejectId(i){
   var v=VERI[i];if(!v)return;
@@ -405,6 +465,27 @@ function adWarn(opts){
 function wYes_fn(){document.getElementById("warnOv").classList.remove("on");if(_wCb){_wCb();_wCb=null;}}
 function wNo(){document.getElementById("warnOv").classList.remove("on");_wCb=null;}
 document.getElementById("warnOv").addEventListener("click",function(e){if(e.target===this)wNo();});
+
+// ═══ PROMPT DIALOG ═══
+var _prCb=null;
+function adPrompt(opts){
+  var t=opts.type||'blue';
+  document.getElementById("prIc").className='warn-ic '+t;
+  document.getElementById("prIcSvg").innerHTML=_wIcons[opts.icon||'edit'];
+  document.getElementById("prTtl").textContent=opts.title||"Enter value";
+  document.getElementById("prSub").innerHTML=opts.msg||"";
+  document.getElementById("prYes").textContent=opts.okLabel||"OK";
+  document.getElementById("prYes").className='warn-yes '+t;
+  var inp=document.getElementById("prInp");
+  inp.placeholder=opts.placeholder||"";inp.value="";
+  _prCb=opts.onOk||null;
+  document.getElementById("promptOv").classList.add("on");
+  setTimeout(function(){inp.focus();},200);
+  inp.onkeydown=function(e){if(e.key==="Enter")prYes_fn();};
+}
+function prYes_fn(){var v=document.getElementById("prInp").value.trim();document.getElementById("promptOv").classList.remove("on");if(_prCb){_prCb(v);_prCb=null;}}
+function prNo(){document.getElementById("promptOv").classList.remove("on");_prCb=null;}
+document.getElementById("promptOv").addEventListener("click",function(e){if(e.target===this)prNo();});
 function fmtP(v){if(curUnit==="MMK")return v.toLocaleString()+" MMK";var c=v*RATES[curUnit];return SYMS[curUnit]+(curUnit==="USD"?c.toFixed(2):Math.round(c).toLocaleString());}
 function fd(t){if(!t)return"-";var d=new Date(t);return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});}
 function toast(m,t){var e=document.getElementById("tst");var ic={ok:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',er:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',"in":'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};e.innerHTML=(ic[t]||ic["in"])+"<span>"+m+"</span>";e.className="tst "+(t||"in")+" v";setTimeout(function(){e.className="tst"},2400);}
@@ -432,6 +513,8 @@ function setCur(c){curUnit=c;document.querySelectorAll(".cur-b").forEach(functio
 function rDash(){
   var t=O.length,pe=O.filter(function(o){return o.status==="pending"}).length,su=O.filter(function(o){return o.status==="confirmed"||o.status==="success"}).length,fa=O.filter(function(o){return o.status==="failed"}).length,rv=0;O.forEach(function(o){if(o.status==="confirmed"||o.status==="success")rv+=o.price;});
 var h='<div class="grid2"><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="lb">Orders</div><div class="vl">'+t+'</div></div><div class="scard"><div class="ic" style="background:rgba(240,165,0,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--yw)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lb">Pending</div><div class="vl" style="color:var(--yw)">'+pe+'</div></div><div class="scard"><div class="ic" style="background:rgba(0,176,92,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--gn)"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="lb">Done</div><div class="vl" style="color:var(--gn)">'+su+'</div></div><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lb">Revenue</div><div class="vl" style="color:var(--ac);font-size:14px">'+fmtP(rv)+'</div></div></div>';
+// Calendar history button
+h+='<button onclick="calOpen()" style="width:100%;margin-bottom:12px;padding:12px 16px;border-radius:14px;border:1.5px solid var(--bd);background:var(--sf);cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--tx2);transition:all .15s"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ac);fill:none;stroke-width:1.7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><rect x="8" y="14" width="3" height="3" rx="1" style="fill:var(--ac)"/></svg>History Calendar<span style="margin-left:auto;font-size:9px;color:var(--tx3);font-weight:600">Tap date to see orders</span></button>';
 var sp=t?Math.round(su/t*100):0,pp=t?Math.round(pe/t*100):0,fp=t?Math.round(fa/t*100):0;
 h+='<div class="st-bars"><div class="st-bar"><span class="sb-lb">Success</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(sp,3)+'%;background:var(--gn)"><span class="sb-val">'+su+'</span></div></div></div><div class="st-bar"><span class="sb-lb">Pending</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(pp,3)+'%;background:var(--yw)"><span class="sb-val">'+pe+'</span></div></div></div><div class="st-bar"><span class="sb-lb">Failed</span><div class="sb-wrap"><div class="sb-fill" style="width:'+Math.max(fp,3)+'%;background:var(--rd)"><span class="sb-val">'+fa+'</span></div></div></div></div>';
 h+='<div class="sec"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Recent</div><div class="cw">';
@@ -660,7 +743,7 @@ function promptImg(){uploadImg("gImg",document.querySelector(".img-up"));}
 function addReg(){document.getElementById("regL").insertAdjacentHTML("beforeend",'<div class="pkr" style="flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" class="rgN" style="flex:1"><input placeholder="Flag" class="rgF" style="width:50px"><input placeholder="Tap for image" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
 function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",'<div class="pkr"><input placeholder="Amount" class="pkd"><input placeholder="Price" class="pkp"><input placeholder="Tap for image" class="pki" style="flex:1.5;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
 function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg").value,bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,pr:[]};document.querySelectorAll(".pkd").forEach(function(el,j){var pe=document.querySelectorAll(".pkp")[j];var pi=document.querySelectorAll(".pki")[j];if(el.value&&pe.value)o.pr.push({d:el.value,p:parseInt(pe.value)||0,img:pi?pi.value:""});});var regs=[];document.querySelectorAll(".rgN").forEach(function(el,j){var fl=document.querySelectorAll(".rgF")[j];var im=document.querySelectorAll(".rgI")[j];if(el.value)regs.push({name:el.value,flag:fl?fl.value:"",img:im?im.value:"",pr:o.pr});});o.regions=regs;if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb)db.collection("games").doc(o.n).set(o);toast("Game saved","ok");rContent();cM();}
-function dG(i){if(!confirm("Delete "+G[i].n+"?"))return;if(fb)db.collection("games").doc(G[i].n).delete();G.splice(i,1);toast("Deleted","ok");rContent();}
+function dG(i){adWarn({title:"Delete Game?",msg:"Delete \""+G[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("games").doc(G[i].n).delete();G.splice(i,1);toast("Deleted","ok");rContent();}});}
 var evAdmFilter="all";
 function reT(){
   var games=[];EVT.forEach(function(e){if(e.game&&games.indexOf(e.game)===-1)games.push(e.game)});
@@ -688,7 +771,7 @@ function reT(){
 }
 function eEv(i){var ev=i>=0?EVT[i]:{emoji:"🎮",bg:"linear-gradient(135deg,#1d4ed8,#6366f1)",badge:"new",game:"",title:"",desc:"",img:"",rewards:[]};document.getElementById("mTi").textContent=i>=0?"Edit Event":"Add Event";var ip=ev.img?'<img src="'+ev.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add banner</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Banner Image</label><div class="img-up" id="evIU" onclick="uploadImg(&quot;evImg&quot;,this)">'+ip+'</div><input type="hidden" id="evImg" value="'+(ev.img||"")+'"/></div><div class="fg"><div class="rw"><div><label>Title</label><input id="evTi" value="'+ev.title+'"/></div><div style="width:60px"><label>Emoji</label><input id="evEm" value="'+ev.emoji+'" style="text-align:center;font-size:18px"/></div></div></div><div class="fg"><label>Game</label><input id="evGm" value="'+ev.game+'" placeholder="e.g. Mobile Legends"/></div><div class="fg"><label>Description</label><textarea id="evDc">'+ev.desc+'</textarea></div><div class="fg"><div class="rw"><div><label>Status</label><select id="evBd"><option'+(ev.badge==="live"?" selected":"")+'>live</option><option'+(ev.badge==="new"?" selected":"")+'>new</option><option'+(ev.badge==="soon"?" selected":"")+'>soon</option></select></div><div><label>Color</label><input id="evBg" type="color" value="#1d4ed8" style="height:40px;padding:2px"/></div></div></div><div class="fg"><label>Rewards (comma sep)</label><input id="evRw" value="'+(Array.isArray(ev.rewards)?ev.rewards.join(", "):ev.rewards||"")+'" placeholder="💎 500 Diamonds, 🎭 Skin"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sEv('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dEv('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sEv(i){var c=document.getElementById("evBg").value;var o={emoji:document.getElementById("evEm").value,bg:"linear-gradient(135deg,"+c+",#6366f1)",badge:document.getElementById("evBd").value,game:document.getElementById("evGm").value,title:document.getElementById("evTi").value,desc:document.getElementById("evDc").value,img:document.getElementById("evImg").value,rewards:document.getElementById("evRw").value.split(",").map(function(s){return s.trim()}).filter(Boolean)};if(!o.title){toast("Title required","er");return;}if(i>=0)EVT[i]=o;else EVT.push(o);if(fb)db.collection("events").doc(o.title).set(o);toast("Saved","ok");rContent();cM();}
-function dEv(i){if(!confirm("Delete?"))return;if(fb)db.collection("events").doc(EVT[i].title).delete();EVT.splice(i,1);toast("Deleted","ok");rContent();}
+function dEv(i){adWarn({title:"Delete Event?",msg:"Delete \""+EVT[i].title+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("events").doc(EVT[i].title).delete();EVT.splice(i,1);toast("Deleted","ok");rContent();}});}
 function rpT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Account ('+PRM.length+')</div><button class="bt gn" onclick="ePrm(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px">';
@@ -706,11 +789,11 @@ function rpT(){
 }
 function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game:"",gameId:"",gameServer:"",gameRank:"",gallery:[]};document.getElementById("mTi").textContent=i>=0?"Edit Account":"Add Account";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Image</label><div class="img-up" onclick="uploadImg(&quot;prmImg&quot;,this)">'+ip+'</div><input type="hidden" id="prmImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Title</label><input id="prmT" value="'+p.t+'"/></div><div class="fg"><label>Description</label><textarea id="prmD">'+p.d+'</textarea></div><div class="fg"><label>Caption</label><input id="prmCap" value="'+(p.caption||"")+'" placeholder="Short caption text"/></div><div class="fg"><div class="rw"><div><label>Discount</label><input id="prmX" value="'+p.x+'"/></div><div><label>Expiry</label><input id="prmE" value="'+p.exp+'"/></div></div></div><div style="font-size:10px;font-weight:800;color:var(--ac);text-transform:uppercase;margin:8px 0 6px">Game Account Info</div><div class="fg"><label>Game</label><input id="prmGm" value="'+(p.game||"")+'" placeholder="e.g. Mobile Legends"/></div><div class="fg"><div class="rw"><div><label>Game ID</label><input id="prmGid" value="'+(p.gameId||"")+'"/></div><div><label>Server</label><input id="prmGsv" value="'+(p.gameServer||"")+'"/></div></div></div><div class="fg"><label>Rank</label><input id="prmGrk" value="'+(p.gameRank||"")+'" placeholder="e.g. Mythic Glory"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPrm('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPrm('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPrm(i){var o={t:document.getElementById("prmT").value,d:document.getElementById("prmD").value,x:document.getElementById("prmX").value,exp:document.getElementById("prmE").value,img:document.getElementById("prmImg").value,caption:document.getElementById("prmCap").value,game:document.getElementById("prmGm").value,gameId:document.getElementById("prmGid").value,gameServer:document.getElementById("prmGsv").value,gameRank:document.getElementById("prmGrk").value,gallery:document.getElementById("prmGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)PRM[i]=o;else PRM.push(o);if(fb)db.collection("promos").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
-function dPrm(i){if(!confirm("Delete?"))return;if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}
+function dPrm(i){adWarn({title:"Delete Account?",msg:"Delete \""+PRM[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}});}
 function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&o.status==="success"}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
 function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Logo Image</label><div class="img-up" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><div class="rw"><div style="width:70px"><label>Icon</label><input id="pyI" value="'+p.ic+'" style="text-align:center;font-size:18px" maxlength="2"/></div><div><label>Color</label><input id="pyC" type="color" value="'+p.col+'" style="height:40px;padding:2px"/></div></div></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div><div class="fg"><label>QR Code</label><div class="img-up" style="height:70px" onclick="uploadImg(&quot;pyQ&quot;,this)">'+(p.qr?'<img src="'+p.qr+'"/>':'<span style="font-size:10px">Tap to upload QR</span>')+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPy(i){var o={n:document.getElementById("pyN").value,ic:document.getElementById("pyI").value,col:document.getElementById("pyC").value,hd:document.getElementById("pyH").value,ph:document.getElementById("pyP").value,img:document.getElementById("pyImg").value,qr:document.getElementById("pyQ")?document.getElementById("pyQ").value:""};if(!o.n){toast("Required","er");return;}if(i>=0)P[i]=o;else P.push(o);if(fb)db.collection("payments").doc(o.n).set(o);toast("Saved","ok");rPay();cM();}
-function dPy(i){if(!confirm("Delete?"))return;if(fb)db.collection("payments").doc(P[i].n).delete();P.splice(i,1);toast("Deleted","ok");rPay();}
+function dPy(i){adWarn({title:"Delete Payment?",msg:"Delete \""+P[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("payments").doc(P[i].n).delete();P.splice(i,1);toast("Deleted","ok");rPay();}});}
 
 // ═══ USERS PAGE ═══
 
@@ -840,7 +923,7 @@ function rgvT(){
 }
 function eGv(i){var g=i>=0?GVA[i]:{t:"",d:"",img:"",game:"",prize:"",end:"",status:"active",gallery:[]};document.getElementById("mTi").textContent=i>=0?"Edit Giveaway":"Add Giveaway";var ip=g.img?'<img src="'+g.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Image</label><div class="img-up" onclick="uploadImg(&quot;gvImg&quot;,this)">'+ip+'</div><input type="hidden" id="gvImg" value="'+(g.img||"")+'"/></div><div class="fg"><label>Title</label><input id="gvT" value="'+g.t+'"/></div><div class="fg"><label>Description</label><textarea id="gvD">'+g.d+'</textarea></div><div class="fg"><div class="rw"><div><label>Game</label><input id="gvGm" value="'+g.game+'"/></div><div><label>Prize</label><input id="gvPz" value="'+g.prize+'"/></div></div></div><div class="fg"><div class="rw"><div><label>End Date</label><input id="gvEnd" value="'+g.end+'"/></div><div><label>Status</label><select id="gvSt"><option'+(g.status==="active"?" selected":"")+'>active</option><option'+(g.status==="ended"?" selected":"")+'>ended</option></select></div></div></div><div class="fg"><label>Gallery (URLs, one per line)</label><textarea id="gvGal" style="min-height:60px">'+(Array.isArray(g.gallery)?g.gallery.join("\n"):g.gallery||"")+'</textarea></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sGv('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dGv('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sGv(i){var o={t:document.getElementById("gvT").value,d:document.getElementById("gvD").value,img:document.getElementById("gvImg").value,game:document.getElementById("gvGm").value,prize:document.getElementById("gvPz").value,end:document.getElementById("gvEnd").value,status:document.getElementById("gvSt").value,gallery:document.getElementById("gvGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)GVA[i]=o;else GVA.push(o);if(fb)db.collection("giveaways").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
-function dGv(i){if(!confirm("Delete?"))return;if(fb)db.collection("giveaways").doc(GVA[i].t).delete();GVA.splice(i,1);toast("Deleted","ok");rContent();}
+function dGv(i){adWarn({title:"Delete Giveaway?",msg:"Delete \""+GVA[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("giveaways").doc(GVA[i].t).delete();GVA.splice(i,1);toast("Deleted","ok");rContent();}});}
 
 var usrSearch="";
 function rUsers(){
@@ -922,7 +1005,7 @@ h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div clas
 h+='<div class="stc"><div class="stl" style="color:var(--tx3)">PCA Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
 function setup2FA(){pendingSecret=genSecret();document.getElementById("tfaSetup").style.display="block";document.getElementById("tfaSecret").textContent=pendingSecret;var uri="otpauth://totp/PcaAdmin:"+(adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin")+"?secret="+pendingSecret+"&issuer=PcaAdmin&digits=6&period=30";document.getElementById("tfaQR").src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data="+encodeURIComponent(uri);}
 async function activate2FA(){var code=document.getElementById("tfaVerify").value.replace(/\s/g,"");if(code.length!==6){document.getElementById("tfaSetupErr").textContent="Enter 6 digits";return;}try{var now=Math.floor(Date.now()/1000),valid=false;for(var w=-1;w<=1;w++){if(code===await genTOTP(pendingSecret,now+w*30)){valid=true;break;}}if(valid){TOTP_SECRET=pendingSecret;twoFaEnabled=true;if(fb)db.collection("config").doc("2fa").set({enabled:true,secret:TOTP_SECRET});toast("2FA Active!","ok");rSet();}else{document.getElementById("tfaSetupErr").textContent="Wrong code";}}catch(e){document.getElementById("tfaSetupErr").textContent="Error";}}
-function disable2FA(){if(!confirm("Disable 2FA?"))return;twoFaEnabled=false;TOTP_SECRET="";if(fb)db.collection("config").doc("2fa").set({enabled:false,secret:""});toast("2FA Disabled","er");rSet();}
+function disable2FA(){adWarn({title:"Disable 2FA?",msg:"Two-factor authentication will be turned off. Anyone with your password can login.",okLabel:"Disable",type:"red",icon:"lock",onOk:function(){twoFaEnabled=false;TOTP_SECRET="";if(fb)db.collection("config").doc("2fa").set({enabled:false,secret:""});toast("2FA Disabled","er");rSet();}});}
 function svC(){if(fb)db.collection("config").doc("store").set(CFG);toast("Saved","ok");}
 
 // Default data — matches Store hardcoded data
@@ -980,6 +1063,96 @@ var DEF_PROMOS=[
 if('serviceWorker' in navigator){navigator.serviceWorker.register('data:text/javascript,self.addEventListener("fetch",function(e){e.respondWith(fetch(e.request).catch(function(){return new Response("Offline")}))})').catch(function(){});}
 var deferredPrompt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
 function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;}else toast("Chrome → Menu → Install","in");}
+
+// ═══ CALENDAR ═══
+var _calY=0,_calM=0,_calSelDate=null;
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function calOpen(){
+  var now=new Date();
+  _calY=now.getFullYear();_calM=now.getMonth();_calSelDate=null;
+  calRender();
+  document.getElementById("calResult").style.display="none";
+  document.getElementById("calOv").classList.add("on");
+}
+function calClose(){document.getElementById("calOv").classList.remove("on");}
+document.getElementById("calOv").addEventListener("click",function(e){if(e.target===this)calClose();});
+function calMove(d){_calM+=d;if(_calM>11){_calM=0;_calY++;}if(_calM<0){_calM=11;_calY--;}calRender();}
+function calRender(){
+  var now=new Date();
+  document.getElementById("calMonthLbl").textContent=MONTHS[_calM]+" "+_calY;
+  var first=new Date(_calY,_calM,1).getDay();
+  var daysInMonth=new Date(_calY,_calM+1,0).getDate();
+  // Which dates have orders?
+  var ordDates={};
+  O.forEach(function(o){
+    if(o.timestamp){var d=new Date(o.timestamp);if(d.getFullYear()===_calY&&d.getMonth()===_calM){ordDates[d.getDate()]=true;}}
+  });
+  var h=DAYS.map(function(d){return'<div class="cal-dh">'+d+'</div>';}).join("");
+  for(var i=0;i<first;i++)h+='<div class="cal-day empty"></div>';
+  for(var day=1;day<=daysInMonth;day++){
+    var isToday=day===now.getDate()&&_calM===now.getMonth()&&_calY===now.getFullYear();
+    var isFuture=new Date(_calY,_calM,day)>now;
+    var isSel=_calSelDate&&_calSelDate.d===day&&_calSelDate.m===_calM&&_calSelDate.y===_calY;
+    var cls="cal-day"+(isToday?" today":"")+(isSel?" sel":"")+(ordDates[day]?" has-ord":"")+(isFuture?" future":"");
+    h+='<div class="'+cls+'" onclick="calSelect('+day+')">'+day+'</div>';
+  }
+  document.getElementById("calGrid").innerHTML=h;
+}
+function calSelect(day){
+  _calSelDate={d:day,m:_calM,y:_calY};
+  calRender();
+  // Show stats for that day
+  var dayOrders=O.filter(function(o){
+    if(!o.timestamp)return false;
+    var d=new Date(o.timestamp);
+    return d.getDate()===day&&d.getMonth()===_calM&&d.getFullYear()===_calY;
+  });
+  var total=dayOrders.length;
+  var confirmed=dayOrders.filter(function(o){return o.status==="confirmed"||o.status==="success";});
+  var pending=dayOrders.filter(function(o){return o.status==="pending";});
+  var failed=dayOrders.filter(function(o){return o.status==="failed";});
+  var revenue=0;confirmed.forEach(function(o){revenue+=o.price;});
+  var dateStr=day+" "+MONTHS[_calM].substring(0,3)+" "+_calY;
+  var h='<div class="cal-result-hd">'+dateStr+'</div>';
+  if(!total){h+='<div style="text-align:center;color:var(--tx3);font-size:12px;padding:8px">No orders on this day</div>';}
+  else{
+    h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px">';
+    h+='<div style="background:var(--sf);border-radius:10px;padding:10px;border:1px solid var(--bd);text-align:center"><div style="font-size:18px;font-weight:900;color:var(--tx)">'+total+'</div><div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase">Orders</div></div>';
+    h+='<div style="background:var(--sf);border-radius:10px;padding:10px;border:1px solid var(--bd);text-align:center"><div style="font-size:14px;font-weight:900;color:var(--ac)">'+fmtP(revenue)+'</div><div style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase">Revenue</div></div>';
+    h+='</div>';
+    h+='<div style="display:flex;gap:6px;margin-bottom:8px">';
+    h+='<span style="flex:1;padding:5px;border-radius:8px;background:rgba(0,176,92,.1);color:var(--gn);font-size:10px;font-weight:800;text-align:center">✓ '+confirmed.length+' Done</span>';
+    h+='<span style="flex:1;padding:5px;border-radius:8px;background:rgba(240,165,0,.1);color:var(--yw);font-size:10px;font-weight:800;text-align:center">⏱ '+pending.length+' Wait</span>';
+    h+='<span style="flex:1;padding:5px;border-radius:8px;background:rgba(229,57,53,.1);color:var(--rd);font-size:10px;font-weight:800;text-align:center">✕ '+failed.length+' Fail</span>';
+    h+='</div>';
+    // Top 3 games that day
+    var gCount={};dayOrders.forEach(function(o){gCount[o.game]=(gCount[o.game]||0)+1;});
+    var topG=Object.keys(gCount).sort(function(a,b){return gCount[b]-gCount[a];}).slice(0,3);
+    if(topG.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Top Games</div>';topG.forEach(function(g){h+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:11px"><span style="font-weight:700">'+g+'</span><span style="color:var(--ac);font-weight:800">'+gCount[g]+' orders</span></div>';});}
+  }
+  var res=document.getElementById("calResult");res.innerHTML=h;res.style.display="block";
+}
+
+// ═══ MIDNIGHT AUTO-REFRESH (Dashboard + Orders only) ═══
+function schedMidnightRefresh(){
+  var now=new Date();
+  var msToMidnight=(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,5))-now;
+  setTimeout(function(){
+    // Only refresh dash+orders — other pages untouched
+    if(fb&&db){
+      subOrders(); // re-subscribe to get fresh snapshot
+      fetchAll(function(){
+        rDash();
+        if(cp==="orders")rOrd();
+        toast("🌙 Auto-refreshed at midnight","in");
+      });
+    }
+    schedMidnightRefresh(); // schedule next midnight
+  },msToMidnight);
+}
+
 // ─── Firebase fetch helpers ───────────────────────────────────────
 // onSnapshot အစား get() သုံး → ပိုမြန်, overhead နည်း
 // orders သည် onSnapshot ဆက်ထား (new order alert လိုတာကြောင့်)
@@ -1037,6 +1210,7 @@ function init(){
   showLoad(); // spinner ဦးစွာပြ
   fetchAll(function(){rDash();}); // parallel get() — ပြီးမှ render
   subOrders(); // orders သည် real-time ဆက်ထား (new order alert)
+  schedMidnightRefresh(); // midnight auto-refresh စတင်
 }
 // Refresh button (header မှာ ထည့်ချင်ရင် onclick="manualRefresh()" ခေါ်)
 function manualRefresh(){toast("Refreshing...","in");fetchAll(function(){({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet})[cp]&&({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet})[cp]();toast("Updated","ok");});}
