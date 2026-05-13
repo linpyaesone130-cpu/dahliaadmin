@@ -835,6 +835,9 @@ function vO(i){
   var usr=o.authUser||"guest";
   var statusColor=isConf?"var(--gn)":o.status==="pending"?"var(--yw)":"var(--rd)";
   var statusText=isConf?"Confirmed":o.status==="pending"?"Waiting":"Failed";
+  var rejectBanner=(!isConf&&o.status==="failed"&&o.rejectReason)
+    ?'<div style="margin-bottom:10px;padding:10px 12px;background:rgba(229,57,53,.08);border-radius:12px;border:1.5px solid rgba(229,57,53,.2);display:flex;gap:8px;align-items:flex-start"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--rd);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><div style="font-size:11px;font-weight:800;color:var(--rd);margin-bottom:2px">Reject အကြောင်းပြချက်</div><div style="font-size:11px;color:var(--tx2);line-height:1.5">'+o.rejectReason+'</div>'+(o.autoRejected?'<div style="font-size:9px;color:var(--tx3);margin-top:3px;font-weight:700">⚡ Auto-rejected by system</div>':"")+'</div></div>'
+    :"";
   var infoRows=[
     {l:"Order ID",v:o.txnId||"-"},
     {l:"Game",v:o.game},
@@ -858,7 +861,8 @@ function vO(i){
     document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="cM()" style="background:var(--ac)">Close</button>';
   } else {
     document.getElementById("mBd").innerHTML=
-      '<div style="padding:10px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid rgba(0,102,255,.1);margin-bottom:12px">'
+      rejectBanner
+      +'<div style="padding:10px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid rgba(0,102,255,.1);margin-bottom:12px">'
       +'<div style="font-size:9px;font-weight:700;color:var(--ac);text-transform:uppercase;margin-bottom:4px">Submitted by</div>'
       +'<div style="font-size:13px;font-weight:800">'+usr+'</div></div>'
       +'<div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="confirmed"?" selected":"")+' value="confirmed">confirmed</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div>'
@@ -1705,15 +1709,43 @@ function subOrders(){
     if(!isFirst&&O.length>old){
       playAlert();
       toast("New order!","in");
-      // Auto-verify new orders that have receipt attached
-      if(AI_KEY){
-        O.forEach(function(o,idx){
-          if(o.status==="pending"&&o.receiptUrl&&!o.aiVerified&&!o._aiChecking){
-            o._aiChecking=true;
-            setTimeout(function(){aiVerifyReceipt(idx,o.receiptUrl);},1500);
-          }
-        });
-      }
+      // New order handling — receipt check + auto-verify
+      O.forEach(function(o,idx){
+        if(o.status!=="pending"||o._aiChecking)return;
+        if(!o.receiptUrl){
+          // No receipt — auto reject after 3 seconds
+          o._aiChecking=true;
+          setTimeout(function(){
+            if(O[idx]&&O[idx].status==="pending"&&!O[idx].receiptUrl){
+              var reason="❌ Receipt မပါတဲ့အတွက် အလိုအလျောက် Reject လုပ်ပါသည်။ Receipt တင်ပြီး order အသစ် ပြန်တင်ပါ။";
+              O[idx].status="failed";
+              O[idx].rejectReason=reason;
+              if(fb&&O[idx].fbId){
+                db.collection("orders").doc(O[idx].fbId).update({
+                  status:"failed",
+                  rejectReason:reason,
+                  rejectedAt:new Date().toISOString(),
+                  autoRejected:true
+                });
+                var uid=O[idx].authUser||"guest";
+                db.collection("notifications").add({
+                  userId:uid,type:"rejected",
+                  title:"❌ Order Rejected — Receipt မပါ",
+                  message:O[idx].game+" — "+reason,
+                  orderId:O[idx].txnId||"",read:false,
+                  timestamp:new Date().toISOString()
+                });
+              }
+              toast("Auto-rejected: Receipt မပါ","er");
+              rDash();rOrd();
+            }
+          },3000);
+        } else if(AI_KEY&&!o.aiVerified){
+          // Has receipt — auto AI verify
+          o._aiChecking=true;
+          setTimeout(function(){aiVerifyReceipt(idx,o.receiptUrl);},1500);
+        }
+      });
     }
     // Dashboard + Orders tab ကို အမြဲ update
     rDash();
