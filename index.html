@@ -1006,7 +1006,28 @@ function sendGiveawayReminder(email,cnt){
 function exportCSV(){var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});if(!ls.length){toast("No orders","er");return;}var csv="Order,Game,User,Amount,Price,Payment,Status,Date\n";ls.forEach(function(o){csv+=o.txnId+","+o.game+","+o.userId+","+o.amount+","+o.price+","+o.payment+","+o.status+","+fd(o.timestamp)+"\n";});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="orders.csv";a.click();toast("Exported","ok");}
 
 var cTab="games",EVT=[],PRM=[];
-function rContent(){var h='<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"><button class="bt'+(cTab==="games"?" pr":"")+'" onclick="cTab=\'games\';rContent()" style="flex:1;justify-content:center">Games</button><button class="bt'+(cTab==="events"?" bl":"")+'" onclick="cTab=\'events\';rContent()" style="flex:1;justify-content:center">Events</button><button class="bt'+(cTab==="promos"?" gn":"")+'" onclick="cTab=\'promos\';rContent()" style="flex:1;justify-content:center">Account</button><button class="bt'+(cTab==="giveaways"?" yw":"")+'" onclick="cTab=\'giveaways\';rContent()" style="flex:1;justify-content:center">🎁 Giveaway</button></div>';if(cTab==="games")h+=rgT();if(cTab==="events")h+=reT();if(cTab==="promos")h+=rpT();if(cTab==="giveaways")h+=rgvAdmin();document.getElementById("pg-content").innerHTML=h;}
+function rContent(){
+  var h='<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">'
+    +'<button class="bt'+(cTab==="games"?" pr":"")+'" onclick="cTab=\'games\';rContent()" style="flex:1;justify-content:center">Games</button>'
+    +'<button class="bt'+(cTab==="events"?" bl":"")+'" onclick="cTab=\'events\';rContent()" style="flex:1;justify-content:center">Events</button>'
+    +'<button class="bt'+(cTab==="promos"?" gn":"")+'" onclick="cTab=\'promos\';rContent()" style="flex:1;justify-content:center">Account</button>'
+    +'<button class="bt'+(cTab==="giveaways"?" yw":"")+'" onclick="cTab=\'giveaways\';rContent()" style="flex:1;justify-content:center">🎁 Giveaway</button>'
+    +'</div>';
+  if(cTab==="games")h+=rgT();
+  if(cTab==="events")h+=reT();
+  if(cTab==="promos")h+=rpT();
+  if(cTab==="giveaways"){
+    // Sub-tabs: Items | Milestones
+    h+='<div style="display:flex;gap:4px;margin-bottom:10px">'
+      +'<button class="bt'+(gvSubTab==="items"?" yw":"")+'" onclick="gvSubTab=\'items\';rContent()" style="flex:1;justify-content:center">🎁 Items</button>'
+      +'<button class="bt'+(gvSubTab==="milestones"?" pr":"")+'" onclick="gvSubTab=\'milestones\';rContent()" style="flex:1;justify-content:center">🏆 Milestones</button>'
+      +'</div>';
+    if(gvSubTab==="items")h+=rgvT();
+    else h+=rgvAdmin();
+  }
+  document.getElementById("pg-content").innerHTML=h;
+}
+var gvSubTab="items";
 function rgT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Games ('+G.length+')</div><button class="bt pr" onclick="eG(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px">';
