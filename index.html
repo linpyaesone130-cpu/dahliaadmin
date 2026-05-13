@@ -267,7 +267,7 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
     <span class="dot" id="fbDot" style="background:var(--tx3)"></span>
     <span id="fbTxt">Connecting...</span>
   </div>
-  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-verify"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
+  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-register"></div><div class="pg" id="pg-verify"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
   <div class="nav">
     <button class="nb on" data-p="dash" onclick="go('dash')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
@@ -277,6 +277,11 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
       <span class="nl">Orders</span>
       <span class="bdg" id="pBdg">0</span>
+    </button>
+    <button class="nb" data-p="register" onclick="go('register')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span class="nl">Register</span>
+      <span class="bdg" id="rBdg" style="display:none">0</span>
     </button>
     <button class="nb" data-p="verify" onclick="go('verify')">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
@@ -503,6 +508,8 @@ function go(p){
     ({dash:rDash,orders:rOrd,users:rUsers})[p]();
   } else if(p==="verify"){
     rVerify();
+  } else if(p==="register"){
+    rRegister();
   } else {
     showLoad();
     fetchAll(function(){({content:rContent,pays:rPay,set:rSet})[p]&&({content:rContent,pays:rPay,set:rSet})[p]();});
@@ -510,7 +517,7 @@ function go(p){
 }
 var sndEnabled=true;function playAlert(){if(!sndEnabled)return;try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;o.type="sine";g.gain.value=0.3;o.start();g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.3);o.stop(ctx.currentTime+0.3);}catch(e){}}
 var TG_BOT="8784274109:AAE3Mwasc8opGIPpx-fOl1K6eyKfqpjA_Ms",TG_CHAT="7579946276";function sendTgNotify(msg){if(!TG_BOT||!TG_CHAT)return;fetch("https://api.telegram.org/bot"+TG_BOT+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:"HTML"})}).catch(function(){});}
-function setCur(c){curUnit=c;document.querySelectorAll(".cur-b").forEach(function(b){b.classList.toggle("on",b.textContent===c)});({dash:rDash,orders:rOrd,pays:rPay})[cp]&&({dash:rDash,orders:rOrd,pays:rPay})[cp]();toast("Currency: "+c,"in");}
+function setCur(c){curUnit=c;document.querySelectorAll(".cur-b").forEach(function(b){b.classList.toggle("on",b.textContent.trim()===c);});try{var refreshMap={dash:rDash,orders:rOrd,pays:rPay};if(refreshMap[cp])refreshMap[cp]();}catch(e){}toast("Currency: "+c,"in");}
 
 function rDash(){
   var t=O.length,pe=O.filter(function(o){return o.status==="pending"}).length,su=O.filter(function(o){return o.status==="confirmed"||o.status==="success"}).length,fa=O.filter(function(o){return o.status==="failed"}).length,rv=0;O.forEach(function(o){if(o.status==="confirmed"||o.status==="success")rv+=o.price;});
@@ -525,7 +532,7 @@ h+=O.slice(0,5).map(function(o){
   var statusTxt=o.status==="confirmed"||o.status==="success"?'<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Confirmed':o.status==="pending"?'<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;vertical-align:-1px"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg> Waiting':'<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.5;vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Failed';
   var gData=G.find(function(g){return g.n===o.game;});
   var gameImg=gData&&gData.img?gData.img:(o.gameImg||"");
-  var gameThumb=gameImg?'<img src="'+gameImg+'" style="width:100%;height:100%;object-fit:cover"/>':o.gameEmoji;
+  var gameThumb=gameImg?'<img src="'+gameImg+'" style="width:100%;height:100%;object-fit:cover"/>':'<span style="font-size:8px;font-weight:900;color:#fff;text-align:center;padding:2px;line-height:1.2;word-break:break-word">'+(gData&&gData.cur?gData.cur:(o.currency||o.game.substring(0,4)))+'</span>';
   return'<div class="li" onclick="go(\'orders\')" style="cursor:pointer"><div class="li-i" style="background:linear-gradient(135deg,'+(gData&&gData.c?gData.c:o.gameColor)+',#1d4ed8);overflow:hidden">'+gameThumb+'</div><div class="li-b"><div class="li-t">'+o.game+'</div><div class="li-s">'+o.currencyIcon+' '+o.amount+'</div></div><div class="li-r"><div class="li-v">'+fmtP(o.price)+'</div><span class="bg '+bc+'">'+statusTxt+'</span></div></div>';
 }).join("")||'<div class="emp">No orders yet</div>';
 h+='</div>';
@@ -556,7 +563,7 @@ function rOrd(){
     var gameColor=gData&&gData.c?gData.c:(o.gameColor||"#1d4ed8");
     var gameThumb=gameImg
       ?'<img src="'+gameImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>'
-      :'<span style="font-size:22px">'+(o.gameEmoji||"🎮")+'</span>';
+      :'<span style="font-size:8px;font-weight:900;color:#fff;text-align:center;padding:2px;line-height:1.2;word-break:break-word">'+(gData&&gData.cur?gData.cur:(o.currency||o.game.substring(0,4)))+'</span>';
     return'<div class="li" style="border-left:3px solid '+borderColor+';padding:12px 14px;margin-bottom:2px;cursor:pointer" onclick="vO('+i+')">'
       +'<div style="display:flex;align-items:center;gap:10px">'
       +'<div class="li-i" style="background:linear-gradient(135deg,'+gameColor+',#1d4ed8);flex-shrink:0;overflow:hidden;border-radius:10px">'+gameThumb+'</div>'
@@ -587,6 +594,112 @@ function rOrd(){
   }).join("")||'<div class="emp" style="padding:32px;text-align:center;color:var(--tx3)">No orders</div>';
   h+='</div>';
   document.getElementById("pg-orders").innerHTML=h;
+}
+
+// ═══ ORDER REGISTER PAGE ═══
+var REGS=[]; // pre-registrations array
+var _regUnsub=null;
+function subRegistrations(){
+  if(_regUnsub)_regUnsub();
+  if(!fb||!db)return;
+  _regUnsub=db.collection("registrations").onSnapshot(function(s){
+    REGS=[];
+    s.forEach(function(d){var r=d.data();r.fbId=d.id;REGS.push(r);});
+    REGS.sort(function(a,b){return(b.timestamp||"")>(a.timestamp||"")?1:-1;});
+    var bdg=document.getElementById("rBdg");
+    if(bdg){var pending=REGS.filter(function(r){return r.status==="pending";}).length;bdg.textContent=pending;bdg.style.display=pending?"flex":"none";}
+    if(cp==="register")rRegister();
+  },function(){REGS=[];});
+}
+var regFilter="all";
+function rRegister(){
+  var list=regFilter==="all"?REGS:REGS.filter(function(r){return r.status===regFilter;});
+  var pendingCount=REGS.filter(function(r){return r.status==="pending";}).length;
+  var h='<div class="cw"><div class="cw-h"><div class="cw-t" style="color:var(--pur)">'
+    +'<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--pur);fill:none;stroke-width:1.7"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>'
+    +'Pre-Registrations <span style="font-weight:600;color:var(--tx3)">('+list.length+')</span></div>'
+    +'<div style="display:flex;align-items:center;gap:4px">'
+    +'<button class="bt'+(regFilter==="all"?" pr":"")+'" onclick="regFilter=\'all\';rRegister()">All</button>'
+    +'<button class="bt'+(regFilter==="pending"?" yw":"")+'" onclick="regFilter=\'pending\';rRegister()">Pending</button>'
+    +'<button class="bt'+(regFilter==="approved"?" gn":"")+'" onclick="regFilter=\'approved\';rRegister()">Approved</button>'
+    +'</div></div>';
+
+  if(!REGS.length){
+    h+='<div class="emp" style="padding:48px 20px;text-align:center">'
+      +'<svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--tx3);fill:none;stroke-width:1.2;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>'
+      +'<div style="font-size:13px;font-weight:800;color:var(--tx2);margin-bottom:4px">No Registrations Yet</div>'
+      +'<div style="font-size:10px;color:var(--tx3)">Users can pre-register for upcoming events</div>'
+      +'</div>';
+  } else {
+    h+=list.map(function(r,i){
+      var isPend=r.status==="pending"||!r.status;
+      var isAppr=r.status==="approved";
+      var borderColor=isPend?"var(--yw)":isAppr?"var(--gn)":"var(--bd)";
+      var statusBadge=isPend
+        ?'<span class="bg pe" style="font-size:8px">Pending</span>'
+        :isAppr
+        ?'<span class="bg su" style="font-size:8px">Approved</span>'
+        :'<span class="bg" style="font-size:8px;background:var(--sf2)">'+r.status+'</span>';
+      return'<div class="li" style="border-left:3px solid '+borderColor+';padding:12px 14px;cursor:pointer" onclick="vReg(\''+r.fbId+'\')"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--pur),#9f8fef);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'
+        +'<div class="li-b"><div class="li-t" style="font-size:13px;font-weight:800">'+(r.name||r.authName||"Unknown")+'</div>'
+        +'<div class="li-s" style="font-size:10px">'+(r.event||r.game||"—")+'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+statusBadge+'<span style="font-size:9px;color:var(--tx3)">'+fd(r.timestamp)+'</span></div>'
+        +(r.pcaId||r.authUser?'<div style="font-size:9px;color:var(--ac);font-weight:700;margin-top:2px">'+(r.pcaId||r.authUser||'')+'</div>':'')
+        +'</div>'
+        +(isPend
+          ?'<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">'
+            +'<button style="padding:5px 10px;border-radius:8px;background:var(--gn);color:#fff;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();approveReg(\''+r.fbId+'\')">Approve</button>'
+            +'<button style="padding:5px 10px;border-radius:8px;background:none;color:var(--rd);border:1.5px solid var(--rd);font-size:10px;font-weight:800;cursor:pointer;font-family:var(--f)" onclick="event.stopPropagation();rejectReg(\''+r.fbId+'\')">Reject</button>'
+            +'</div>'
+          :'<div style="text-align:right;flex-shrink:0"><div style="font-size:9px;color:'+(isAppr?"var(--gn)":"var(--tx3)")+';font-weight:800">'+(isAppr?"Approved":"—")+'</div></div>')
+        +'</div></div>';
+    }).join("");
+  }
+  h+='</div>';
+  document.getElementById("pg-register").innerHTML=h;
+}
+function approveReg(fbId){
+  var r=REGS.find(function(x){return x.fbId===fbId;});if(!r)return;
+  if(fb)db.collection("registrations").doc(fbId).update({status:"approved",approvedAt:new Date().toISOString(),approvedBy:_localLoginUser||"admin"});
+  toast("Registration Approved","ok");
+  sendTgNotify("<b>Registration Approved</b>\n"+(r.name||r.authName||"User")+"\nEvent: "+(r.event||r.game||"—")+"\nBy: "+(_localLoginUser||"admin"));
+}
+function rejectReg(fbId){
+  adWarn({title:"Reject Registration?",msg:"This registration will be rejected.",okLabel:"Reject",type:"red",icon:"warn",onOk:function(){
+    if(fb)db.collection("registrations").doc(fbId).update({status:"rejected",rejectedAt:new Date().toISOString()});
+    toast("Rejected","er");
+  }});
+}
+function delReg(fbId){
+  adWarn({title:"Delete Registration?",msg:"Permanently delete this registration.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){
+    if(fb)db.collection("registrations").doc(fbId).delete();
+    REGS=REGS.filter(function(r){return r.fbId!==fbId;});
+    toast("Deleted","ok");
+    rRegister();
+  }});
+}
+function vReg(fbId){
+  var r=REGS.find(function(x){return x.fbId===fbId;});if(!r)return;
+  document.getElementById("mTi").textContent="Registration Details";
+  var isAppr=r.status==="approved";
+  var isPend=r.status==="pending"||!r.status;
+  var statusColor=isAppr?"var(--gn)":isPend?"var(--yw)":"var(--rd)";
+  var rows=[
+    {l:"Name",v:r.name||r.authName||"—"},
+    {l:"Event",v:r.event||r.game||"—"},
+    {l:"User",v:r.authUser||r.pcaId||"Guest"},
+    {l:"Game ID",v:r.gameId||"—"},
+    {l:"Server",v:r.serverId||"—"},
+    {l:"Note",v:r.note||"—"},
+    {l:"Date",v:fd(r.timestamp)},
+    {l:"Status",v:'<span style="color:'+statusColor+';font-weight:800">'+(r.status||"pending")+'</span>'}
+  ].map(function(x){return'<div class="mr"><span class="ml">'+x.l+'</span><span class="mv">'+x.v+'</span></div>';}).join("");
+  document.getElementById("mBd").innerHTML=rows;
+  var btns='<button class="mb cn" onclick="cM()">Close</button>';
+  if(isPend)btns='<button class="mb sv" onclick="approveReg(\''+fbId+'\');cM()">Approve</button>'+btns;
+  btns+='<button class="mb dl" onclick="delReg(\''+fbId+'\')">Delete</button>';
+  document.getElementById("mFt").innerHTML=btns;
+  document.getElementById("mo").classList.add("on");
 }
 
 function rVerify(){
@@ -642,7 +755,7 @@ function subVerify(){
     VERI=[];s.forEach(function(d){VERI.push(d.data());});
     var bdg=document.getElementById("vBdg");
     if(bdg){bdg.textContent=VERI.length;bdg.style.display=VERI.length?"flex":"none";}
-    if(VERI.length>prev)toast("🛡️ New ID verification!","in");
+    if(VERI.length>prev)toast("New ID verification!","in");
     rVerify();
     // LIVE pulse
     var live=document.getElementById("veriLive");
@@ -706,10 +819,10 @@ function vO(i){
     :'<div class="fg"><label>Receipt</label><div class="rcp-none">No receipt uploaded</div></div>';
   var usr=o.authUser||"guest";
   var statusColor=isConf?"var(--gn)":o.status==="pending"?"var(--yw)":"var(--rd)";
-  var statusText=isConf?"✅ Confirmed":o.status==="pending"?"⏱ Waiting":"❌ Failed";
+  var statusText=isConf?"Confirmed":o.status==="pending"?"Waiting":"Failed";
   var infoRows=[
     {l:"Order ID",v:o.txnId||"-"},
-    {l:"Game",v:(o.gameEmoji||"🎮")+" "+o.game},
+    {l:"Game",v:o.game},
     {l:"Package",v:(o.currencyIcon||"")+" "+o.amount},
     {l:"User ID",v:o.userId+(o.serverId?" (Server: "+o.serverId+")":"")},
     {l:"Payment",v:o.payment||"-"},
@@ -736,7 +849,7 @@ function vO(i){
       +'<div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="confirmed"?" selected":"")+' value="confirmed">confirmed</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div>'
       +'<div class="fg"><div class="rw"><div><label>Game User ID</label><input id="xOU" value="'+o.userId+'"/></div><div><label>Server</label><input id="xOSv" value="'+(o.serverId||"")+'"/></div></div></div>'
       +rcp
-      +[{l:"Order",v:o.txnId},{l:"Game",v:(o.gameEmoji||"🎮")+" "+o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("");
+      +[{l:"Order",v:o.txnId},{l:"Game",v:o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("");
     document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="svO('+i+')">Save</button><button class="mb cn" onclick="cM()">Cancel</button>';
   }
   document.getElementById("mo").classList.add("on");
@@ -754,7 +867,7 @@ function rgT(){
       ?'<div class="grid-card-skel"></div><img class="grid-card-img" src="'+g.img+'" onload="this.classList.add(\'loaded\');this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
       :'<div class="grid-card-skel"></div>';
     return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="eG('+i+')">'
-      +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+imgHtml+'</div>'
+      +'<div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden">'+imgHtml+'</div>'
       +'<div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+g.n+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+g.cur+' • '+g.pl+'</div>'
       +'<div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();eG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No games</div>';
@@ -784,7 +897,7 @@ function reT(){
     var bdgCol=ev.badge==="live"?"background:#00b05c":ev.badge==="new"?"background:var(--ac)":"background:var(--yw)";
     var bdgBg=ev.badge==="live"?"#00b05c":ev.badge==="new"?"#2ca5e0":"#f0a500";
     return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="eEv('+idx+')">'
-      +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+imgHtml
+      +'<div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden">'+imgHtml
       +'<span style="position:absolute;top:6px;right:6px;padding:2px 7px;border-radius:5px;font-size:7px;font-weight:900;text-transform:uppercase;color:#fff;background:'+bdgBg+';letter-spacing:.4px">'+ev.badge+'</span></div>'
       +'<div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+ev.title+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+ev.game+'</div>'
       +'<div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();eEv('+idx+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dEv('+idx+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
@@ -803,7 +916,7 @@ function rpT(){
       ?'<div class="grid-card-skel"></div><img class="grid-card-img" src="'+p.img+'" onload="this.classList.add(\'loaded\');this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
       :'<div class="grid-card-skel"></div>';
     return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="ePrm('+i+')">'
-      +'<div style="width:100%;aspect-ratio:16/9;position:relative;overflow:hidden">'+imgHtml+'</div>'
+      +'<div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden">'+imgHtml+'</div>'
       +'<div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+p.t+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+(p.game||p.d)+'</div>'
       +'<div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();ePrm('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dPrm('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No accounts</div>';
@@ -814,8 +927,8 @@ function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game
 function sPrm(i){var o={t:document.getElementById("prmT").value,d:document.getElementById("prmD").value,x:document.getElementById("prmX").value,exp:document.getElementById("prmE").value,img:document.getElementById("prmImg").value,caption:document.getElementById("prmCap").value,game:document.getElementById("prmGm").value,gameId:document.getElementById("prmGid").value,gameServer:document.getElementById("prmGsv").value,gameRank:document.getElementById("prmGrk").value,gallery:document.getElementById("prmGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)PRM[i]=o;else PRM.push(o);if(fb)db.collection("promos").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
 function dPrm(i){adWarn({title:"Delete Account?",msg:"Delete \""+PRM[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}});}
 function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&o.status==="success"}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
-function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Logo Image</label><div class="img-up" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><div class="rw"><div style="width:70px"><label>Icon</label><input id="pyI" value="'+p.ic+'" style="text-align:center;font-size:18px" maxlength="2"/></div><div><label>Color</label><input id="pyC" type="color" value="'+p.col+'" style="height:40px;padding:2px"/></div></div></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div><div class="fg"><label>QR Code</label><div class="img-up" style="height:70px" onclick="uploadImg(&quot;pyQ&quot;,this)">'+(p.qr?'<img src="'+p.qr+'"/>':'<span style="font-size:10px">Tap to upload QR</span>')+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
-function sPy(i){var o={n:document.getElementById("pyN").value,ic:document.getElementById("pyI").value,col:document.getElementById("pyC").value,hd:document.getElementById("pyH").value,ph:document.getElementById("pyP").value,img:document.getElementById("pyImg").value,qr:document.getElementById("pyQ")?document.getElementById("pyQ").value:""};if(!o.n){toast("Required","er");return;}if(i>=0)P[i]=o;else P.push(o);if(fb)db.collection("payments").doc(o.n).set(o);toast("Saved","ok");rPay();cM();}
+function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Logo Image</label><div class="img-up" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div><div class="fg"><label>QR Code</label><div class="img-up" style="height:70px" onclick="uploadImg(&quot;pyQ&quot;,this)">'+(p.qr?'<img src="'+p.qr+'"/>':'<span style="font-size:10px">Tap to upload QR</span>')+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
+function sPy(i){var p=i>=0?P[i]:{ic:"$",col:"#1d4ed8"};var o={n:document.getElementById("pyN").value,ic:p.ic||"$",col:p.col||"#1d4ed8",hd:document.getElementById("pyH").value,ph:document.getElementById("pyP").value,img:document.getElementById("pyImg").value,qr:document.getElementById("pyQ")?document.getElementById("pyQ").value:""};if(!o.n){toast("Required","er");return;}if(i>=0)P[i]=o;else P.push(o);if(fb)db.collection("payments").doc(o.n).set(o);toast("Saved","ok");rPay();cM();}
 function dPy(i){adWarn({title:"Delete Payment?",msg:"Delete \""+P[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("payments").doc(P[i].n).delete();P.splice(i,1);toast("Deleted","ok");rPay();}});}
 
 // ═══ USERS PAGE ═══
@@ -854,7 +967,7 @@ function compressImage(file, maxSizeKB, maxWidthPx, callback) {
         if (sizeKB <= maxSizeKB || quality <= 0.15) {
           // compress ပြီး — size info ပြပြီး callback ခေါ်
           var finalKB = Math.round((result.length * 3) / 4 / 1024);
-          toast("📷 " + finalKB + "KB (compressed)", "ok");
+          toast(finalKB + "KB (compressed)", "ok");
           callback(result);
         } else {
           quality = Math.max(quality - 0.10, 0.15);
@@ -1243,7 +1356,7 @@ function schedMidnightRefresh(){
       fetchAll(function(){
         rDash();
         if(cp==="orders")rOrd();
-        toast("🌙 Auto-refreshed at midnight","in");
+        toast("Auto-refreshed at midnight","in");
       });
     }
     schedMidnightRefresh(); // schedule next midnight
@@ -1276,7 +1389,7 @@ function subOrders(){
     var old=O.length;O=[];
     s.forEach(function(d){var x=d.data();x.fbId=d.id;O.push(x);});
     O.sort(function(a,b){return(b.timestamp||"")>(a.timestamp||"")?1:-1;});
-    if(!isFirst&&O.length>old){playAlert();toast("🔔 New order!","in");}
+    if(!isFirst&&O.length>old){playAlert();toast("New order!","in");}
     // Dashboard + Orders tab ကို အမြဲ update
     rDash();
     rOrd();
@@ -1302,8 +1415,9 @@ function init(){
   subOrders(); // orders သည် real-time ဆက်ထား (new order alert)
   subVerify(); // verifications real-time listener
   subUsers();  // users real-time listener (registered + guest)
+  subRegistrations(); // pre-registrations real-time listener
   schedMidnightRefresh(); // midnight auto-refresh စတင်
 }
 // Refresh button (header မှာ ထည့်ချင်ရင် onclick="manualRefresh()" ခေါ်)
-function manualRefresh(){toast("Refreshing...","in");fetchAll(function(){({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet})[cp]&&({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet})[cp]();toast("Updated","ok");});}
+function manualRefresh(){toast("Refreshing...","in");fetchAll(function(){({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet,register:rRegister})[cp]&&({dash:rDash,orders:rOrd,verify:rVerify,content:rContent,pays:rPay,users:rUsers,set:rSet,register:rRegister})[cp]();toast("Updated","ok");});}
 </script></body></html>
