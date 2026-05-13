@@ -804,34 +804,222 @@ function delAllOrders(){
 }
 
 // FIX: Write "confirmed" (not "success") so Store displays "Confirmed" correctly
-function aO(i,s){
-  // Normalize: "success" button now writes "confirmed"
+// ─── aO: AI-First Order Confirm / Reject ──────────────────────────────
+// Confirm ဖြင့် ခေါ်ရင် → AI receipt စစ်ပြီး confirm (AI key မရှိရင် manual)
+// Reject ဖြင့် ခေါ်ရင် → reason prompt ပြပြီး detailed notification ပို့
+function aO(i,s,_forceSkipAI){
+  var order=O[i];
+  if(!order)return;
   var writeStatus=s;
-  O[i].status=writeStatus;
-  if(fb&&O[i].fbId){
-    db.collection("orders").doc(O[i].fbId).update({status:writeStatus});
-    var uid=O[i].authUser||"guest";
-    db.collection("notifications").add({userId:uid,type:writeStatus==="confirmed"?"approved":"rejected",title:writeStatus==="confirmed"?"✅ Order Confirmed!":"❌ Order Rejected",message:O[i].game+" "+O[i].currencyIcon+O[i].amount+" — "+writeStatus,orderId:O[i].txnId||"",read:false,timestamp:new Date().toISOString()});
-  }
-  var tgMsg=writeStatus==="confirmed"?"<b>✅ ORDER CONFIRMED</b>\n\n":"<b>❌ ORDER REJECTED</b>\n\n";
-  tgMsg+="🎮 <b>"+O[i].game+"</b>\n";
-  tgMsg+="📦 "+O[i].currencyIcon+" "+O[i].amount+" "+O[i].currency+"\n";
-  tgMsg+="👤 User: "+O[i].userId+(O[i].serverId?" ("+O[i].serverId+")":"")+"\n";
-  tgMsg+="💰 "+O[i].price+" MMK\n";
-  tgMsg+="💳 "+O[i].payment+"\n";
-  tgMsg+="🔖 #"+O[i].txnId+"\n\n";
-  tgMsg+=writeStatus==="confirmed"?"Items will be delivered shortly! ⚡":"Contact support for help.";
-  sendTgNotify(tgMsg);
-  toast(writeStatus==="confirmed"?"Order Confirmed":"Order Rejected",writeStatus==="confirmed"?"ok":"er");
-  // ── Giveaway Milestone check ──
-  if(writeStatus==="confirmed"){
-    var userEmail=O[i].authUser;
-    if(userEmail&&userEmail!=="__guest__"){
-      var confirmedCount=O.filter(function(o){return(o.status==="confirmed"||o.status==="success")&&o.authUser===userEmail;}).length;
-      checkGiveawayMilestone(userEmail,confirmedCount);
+
+  // ══ CONFIRM PATH ══
+  if(writeStatus==="confirmed"&&!_forceSkipAI){
+    // AI key ရှိ + receipt ရှိ → AI စစ်ပြီးမှ confirm
+    if(AI_KEY&&order.receiptUrl&&!order.aiVerified){
+      toast("AI စစ်ဆေးနေသည်...","in");
+      // AI verify ကိုဖွင့်ပြီး result ပြ — auto-approve or flag
+      _aiConfirmCheck(i);
+      return;
     }
+    // AI key မရှိ / စစ်ပြီးသား → Manual confirm
+    _doConfirm(i);
+    return;
   }
-  rOrd();rDash();
+
+  // ══ REJECT PATH ══
+  if(writeStatus==="failed"&&!_forceSkipAI){
+    // Reason prompt ပြ
+    _promptRejectReason(i);
+    return;
+  }
+
+  // ══ FORCE CONFIRM (AI ကနေ ဆုံးဖြတ်ချက်ပေးပြီးသား) ══
+  if(writeStatus==="confirmed"){
+    _doConfirm(i);
+    return;
+  }
+
+  // ══ FORCE REJECT (reason ရပြီးသား) ══
+  _doReject(i, order._pendingRejectReason||"Admin မှ Reject လုပ်ပါသည်။");
+  delete order._pendingRejectReason;
+}
+
+// ─── AI check before confirming ───────────────────────────────────────
+async function _aiConfirmCheck(i){
+  var order=O[i];
+  if(!order)return;
+  var payAcc=P.find(function(p){return p.n===order.payment;});
+  var payHd=payAcc?payAcc.hd:"";
+  var prompt='You are a Myanmar payment receipt OCR extractor. Analyze this payment receipt screenshot carefully.\n\nExtract ONLY these fields in JSON format:\n{\n  "amount": "numeric amount in MMK (numbers only, no commas)",\n  "receiver": "receiver/recipient name exactly as shown",\n  "sender": "sender name if visible",\n  "date": "transaction date as shown",\n  "time": "transaction time if visible",\n  "paymentType": "KBZPay or Wave Pay or AYA Pay or CB Pay or Unknown",\n  "transactionId": "transaction ID/reference number if visible",\n  "status": "Success or Completed or Failed or Unknown"\n}\n\nIMPORTANT:\n- For KBZPay receipts: look for "လက်ခံသူ" (receiver) and "ငွေပမာဏ" (amount)\n- For Wave Pay: look for "Receiver" and "Amount"\n- If a field is not visible, use null\n- Return ONLY valid JSON, no other text';
+  try{
+    var imgData=order.receiptUrl.split(",")[1]||order.receiptUrl;
+    var raw=await geminiCall([{inline_data:{mime_type:"image/jpeg",data:imgData}},{text:prompt}],600);
+    if(!raw)raw="{}";
+    var clean=raw.replace(/```json|```/g,"").trim();
+    var extracted={};
+    try{extracted=JSON.parse(clean);}catch(e){var m=raw.match(/\{[\s\S]*\}/);if(m)try{extracted=JSON.parse(m[0]);}catch(e2){}}
+    var result=computeScore(extracted,order,payHd);
+
+    // ── Score ၈၅%+ → auto confirm ──
+    if(result.total>=85){
+      if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiVerified:true,aiScore:result.total,aiExtracted:extracted,aiVerifiedAt:new Date().toISOString()});
+      toast("AI စစ်ဆေး ✓ "+result.total+"% — Confirming...","ok");
+      _doConfirm(i);
+      return;
+    }
+
+    // ── Score ၅၀-၈၄% → Admin ကိုပြ၊ Force confirm/reject ရွေး ──
+    if(result.total>=50){
+      var lvlColor=result.total>=70?"var(--yw)":"var(--rd)";
+      var fieldHtml=result.fields.map(function(f){
+        var ic=f.match?"✅":"❌";
+        return"<div style='font-size:10px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.04)'>"
+          +ic+" <b>"+f.label+"</b> ("+f.weight+"%) — "
+          +(f.label==="Amount"?"Receipt: "+(extracted.amount||"မတွေ့")+" | Order: "+order.price+" MMK":f.extracted||"မတွေ့")
+          +"</div>";
+      }).join("");
+      var msg="<div style='background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.3);border-radius:12px;padding:12px;margin-bottom:10px'>"
+        +"<div style='font-size:12px;font-weight:900;color:"+lvlColor+";margin-bottom:6px'>⚠️ AI Score: "+result.total+"% — စစ်ဆေးရန် လိုအပ်</div>"
+        +fieldHtml
+        +"<div style='font-size:9px;color:var(--tx3);margin-top:6px'>TxID: "+(extracted.transactionId||"—")+" • "+extracted.paymentType+"</div>"
+        +"</div>"
+        +"<div style='display:flex;gap:6px;margin-top:6px'>"
+        +"<button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_doConfirm("+i+")\">✅ Force Confirm</button>"
+        +"<button class='mb dl' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_promptRejectReason("+i+")\">❌ Reject</button>"
+        +"</div>";
+      // Inline modal ဖြင့် ပြ
+      _showAIReviewModal("⚠️ AI Review — Order #"+(order.txnId||""), msg);
+      if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiFlag:true,aiScore:result.total,aiExtracted:extracted});
+      sendTgNotify("⚠️ <b>AI REVIEW NEEDED — "+result.total+"%</b>\n🎮 "+order.game+"\n💰 "+fmtP(order.price)+"\n🔖 #"+(order.txnId||""));
+      return;
+    }
+
+    // ── Score ၅၀% အောက် → auto reject ──
+    var failedFields=result.fields.filter(function(f){return!f.match;});
+    var reasonLines=failedFields.map(function(f){
+      if(f.label==="Amount")return"❌ ငွေပမာဏ မတူညီပါ (Receipt: "+(extracted.amount||"မတွေ့")+", Order: "+order.price+" MMK)";
+      if(f.label==="Receiver")return"❌ လက်ခံသူအမည် မကိုက်ညီပါ (Receipt: "+(extracted.receiver||"မတွေ့")+")";
+      if(f.label==="Date")return"❌ ငွေလွှဲ ရက်စွဲ မကိုက်ညီပါ";
+      return"❌ "+f.label+" မကိုက်ညီပါ";
+    });
+    var autoReason="🤖 AI စစ်ဆေးချက် — Score: "+result.total+"%\n\nအောက်ပါအချက်များ မကိုက်ညီသောကြောင့် Reject ဖြစ်ပါသည်:\n"
+      +reasonLines.join("\n")
+      +"\n\n✅ ဘာလုပ်ရမလဲ:\nမှန်ကန်သော ငွေလွှဲ Receipt ပြေစာ screenshot ကို ပြန်တင်ပြီး Order အသစ် ပြတင်ပေးပါ။";
+    if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiFlag:true,aiScore:result.total,aiExtracted:extracted});
+    toast("AI Score "+result.total+"% — Auto Reject","er");
+    _doReject(i, autoReason, {aiScore:result.total,aiExtracted:extracted,autoRejected:true,autoLocked:true});
+  }catch(err){
+    toast("AI စစ်မရပါ — Manual Confirm?","in");
+    _showAIReviewModal("AI Error","<div style='padding:10px;font-size:12px;color:var(--rd)'>AI စစ်ဆေးမရပါ: "+err.message+"<br><br><div style='display:flex;gap:6px;margin-top:8px'><button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_doConfirm("+i+")\">Manual Confirm</button><button class='mb cn' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none'\">Cancel</button></div></div>");
+  }
+}
+
+// ─── AI Review Modal (reusable) ───────────────────────────────────────
+function _showAIReviewModal(title, bodyHtml){
+  var existing=document.getElementById("aiReviewMo");
+  if(existing)document.body.removeChild(existing);
+  var mo=document.createElement("div");
+  mo.id="aiReviewMo";
+  mo.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0)";
+  mo.innerHTML="<div style='background:var(--sf);border-radius:22px 22px 0 0;padding:20px 18px 28px;max-width:430px;width:100%;max-height:80vh;overflow-y:auto;border-top:1px solid var(--bd2)'>"
+    +"<div style='width:40px;height:4px;border-radius:4px;background:var(--bd2);margin:0 auto 14px'></div>"
+    +"<div style='font-size:14px;font-weight:900;color:var(--tx);margin-bottom:12px'>"+title+"</div>"
+    +bodyHtml
+    +"</div>";
+  mo.addEventListener("click",function(e){if(e.target===mo){document.body.removeChild(mo);}});
+  document.body.appendChild(mo);
+}
+
+// ─── Reject reason prompt ─────────────────────────────────────────────
+function _promptRejectReason(i){
+  var order=O[i];
+  adPrompt({
+    title:"Reject အကြောင်းပြချက်",
+    msg:"Order #"+(order.txnId||order.fbId||"")+" — User ကို ပို့မည့် Reject reason ထည့်ပါ",
+    placeholder:"e.g. ငွေပမာဏ မကိုက်ညီပါ...",
+    okLabel:"Reject & Notify",
+    type:"red",
+    icon:"warn",
+    onOk:function(reason){
+      if(!reason||reason.length<3){toast("အကြောင်းပြချက် ထည့်ပါ","er");return;}
+      var fullReason="❌ Admin Reject အကြောင်းပြချက်:\n"+reason
+        +"\n\n📦 Order: "+(order.txnId||order.fbId||"")
+        +"\n🎮 Game: "+order.game
+        +"\n💰 Amount: "+fmtP(order.price)
+        +"\n\n✅ ဘာလုပ်ရမလဲ:\nသတ်မှတ်ချက်နှင့် မကိုက်ညီသောကြောင့် Order ကို ပြန်တင်ပေးပါ သို့မဟုတ် Support ကို ဆက်သွယ်ပါ။";
+      _doReject(i, fullReason);
+    }
+  });
+}
+
+// ─── Execute confirm ──────────────────────────────────────────────────
+function _doConfirm(i){
+  var order=O[i];
+  O[i].status="confirmed";
+  if(fb&&order.fbId){
+    db.collection("orders").doc(order.fbId).update({status:"confirmed",confirmedAt:new Date().toISOString()});
+    var uid=order.authUser||"guest";
+    db.collection("notifications").add({
+      userId:uid,type:"approved",
+      title:"✅ Order Confirmed!",
+      message:"🎮 Game: "+order.game+"\n📦 Package: "+(order.currencyIcon||"")+order.amount+" "+order.currency
+        +"\n💰 Amount: "+fmtP(order.price)+"\n🔖 Order ID: "+(order.txnId||order.fbId||"")
+        +"\n\n⚡ Item များ မကြာမီ ထည့်သွင်းပေးမည်။ ကျေးဇူးတင်ပါသည်!",
+      orderId:order.txnId||"",read:false,timestamp:new Date().toISOString()
+    });
+  }
+  var tgMsg="<b>✅ ORDER CONFIRMED</b>\n\n"
+    +"🎮 <b>"+order.game+"</b>\n"
+    +"📦 "+(order.currencyIcon||"")+" "+order.amount+" "+order.currency+"\n"
+    +"👤 User: "+order.userId+(order.serverId?" ("+order.serverId+")":"")+"\n"
+    +"💰 "+fmtP(order.price)+"\n💳 "+order.payment+"\n🔖 #"+(order.txnId||"")+"\n\n⚡ Delivered!";
+  sendTgNotify(tgMsg);
+  toast("Order Confirmed ✓","ok");
+  // Giveaway milestone
+  var userEmail=order.authUser;
+  if(userEmail&&userEmail!=="__guest__"){
+    var cc=O.filter(function(o){return(o.status==="confirmed"||o.status==="success")&&o.authUser===userEmail;}).length;
+    checkGiveawayMilestone(userEmail,cc);
+  }
+  rOrd();rDash();cM();
+}
+
+// ─── Execute reject with full reason to user notification ─────────────
+function _doReject(i, rejectReason, extra){
+  var order=O[i];
+  O[i].status="failed";
+  O[i].rejectReason=rejectReason;
+  if(extra){Object.assign(O[i],extra);}
+  var fireUpdate={status:"failed",rejectReason:rejectReason,rejectedAt:new Date().toISOString()};
+  if(extra)Object.assign(fireUpdate,extra);
+  if(fb&&order.fbId){
+    db.collection("orders").doc(order.fbId).update(fireUpdate);
+    var uid=order.authUser||order.pcaId||"guest";
+    // User notification — detailed breakdown
+    var notifTitle=(extra&&extra.autoRejected)
+      ?"❌ Order Auto-Reject — AI စစ်ဆေးချက် မအောင်မြင်"
+      :"❌ Order Reject လုပ်ခြင်း";
+    db.collection("notifications").add({
+      userId:uid,
+      type:"rejected",
+      title:notifTitle,
+      message:"🎮 Game: "+order.game+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")
+        +"\n💰 Amount: "+fmtP(order.price)+"\n💳 Payment: "+(order.payment||"—")
+        +"\n\n"+rejectReason,
+      orderId:order.txnId||order.fbId||"",
+      aiScore:extra&&extra.aiScore!==undefined?extra.aiScore:undefined,
+      read:false,
+      timestamp:new Date().toISOString()
+    });
+  }
+  var tgMsg="<b>❌ ORDER REJECTED</b>\n\n"
+    +"🎮 <b>"+order.game+"</b>\n"
+    +"📦 "+(order.currencyIcon||"")+" "+order.amount+" "+order.currency+"\n"
+    +"👤 "+order.userId+"\n💰 "+fmtP(order.price)+"\n🔖 #"+(order.txnId||"")+"\n\n"
+    +"📋 <b>Reason:</b>\n"+rejectReason;
+  sendTgNotify(tgMsg);
+  toast("Order Rejected","er");
+  rOrd();rDash();cM();
 }
 function vO(i){
   var o=O[i];
@@ -1402,9 +1590,29 @@ h+='</div><div class="stc"><div class="stc-t">Store</div><div class="str"><div c
 h+='<div class="stc"><div class="stc-t">Notifications</div><div class="str"><div class="stl">Sound</div><label class="tgl"><input type="checkbox" '+(sndEnabled?"checked":"")+' onchange="sndEnabled=this.checked"/><span class="ts"></span></label></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="playAlert();toast(\'Played\',\'ok\')">Play</button></div></div>';
 h+='<div class="stc"><div class="stc-t" style="color:var(--blu)">Telegram</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Bot Token</div><input class="sti" value="'+TG_BOT+'" placeholder="123456:ABC..." onchange="TG_BOT=this.value"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Chat ID</div><input class="sti" value="'+TG_CHAT+'" placeholder="-100123..." onchange="TG_CHAT=this.value"/></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="sendTgNotify(\'Test!\');toast(\'Sent\',\'ok\')">Send</button></div></div>';
 h+='<div class="stc"><div class="stc-t" style="color:var(--pur)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M9 12l2 2 4-4"/></svg>AI Receipt Verification</div>'
-  +'<div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Groq API Key</div><div style="font-size:9px;color:var(--tx3);margin-bottom:6px">Get from console.groq.com — Free, no location block</div><div style="display:flex;gap:6px"><input class="sti" type="password" id="aiKeyInp" value="'+AI_KEY+'" placeholder="gsk_..." style="flex:1;font-family:var(--m)"/><button class="bt gn" onclick="saveAIKey()">Save</button></div></div>'
-  +'<div class="str"><div><div class="stl">Confidence Threshold</div><div class="sts">Orders above this % are auto-approved</div></div><div style="display:flex;align-items:center;gap:6px"><input id="aiThreshInp" type="number" min="50" max="99" value="85" style="width:55px;padding:6px 8px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-family:var(--m);text-align:center;outline:none"/><span style="font-size:11px;font-weight:700;color:var(--tx3)">%</span></div></div>'
-  +'<div class="str"><div><div class="stl">Test AI Key</div></div><button class="bt bl" onclick="testAIKey()">Test</button></div>'
+  +'<div class="str" style="flex-direction:column;align-items:stretch">'
+  +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+  +'<div class="stl">Groq API Key</div>'
+  +'<span id="aiKeyStatus" style="font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;'+(AI_KEY?'background:rgba(0,176,92,.1);color:var(--gn);border:1px solid rgba(0,176,92,.2)':'background:rgba(229,57,53,.08);color:var(--rd);border:1px solid rgba(229,57,53,.2)')+'">'+(AI_KEY?'✓ Key Loaded':'✗ Not Set')+'</span>'
+  +'</div>'
+  +'<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">console.groq.com မှ Free API key ယူပါ — Myanmar မှ block မခံ</div>'
+  +'<div style="display:flex;gap:6px;align-items:center">'
+  +'<div style="position:relative;flex:1"><input class="sti" type="password" id="aiKeyInp" value="'+AI_KEY+'" placeholder="gsk_..." style="width:100%;font-family:var(--m);padding-right:36px"/>'
+  +'<button onclick="(function(){var i=document.getElementById(\'aiKeyInp\');i.type=i.type===\'password\'?\'text\':\'password\';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:700">👁</button></div>'
+  +'<button class="bt gn" onclick="saveAIKey()" style="white-space:nowrap">Save</button>'
+  +'</div>'
+  +'<div style="display:flex;gap:4px;margin-top:8px">'
+  +'<button class="bt bl" style="flex:1;justify-content:center;font-size:10px" onclick="testAIKey()">🧪 Test Key</button>'
+  +'<button class="bt" style="flex:1;justify-content:center;font-size:10px;color:var(--tx3)" onclick="(function(){document.getElementById(\'aiKeyInp\').value=\'\';AI_KEY=\'\';if(fb&&db)db.collection(\'config\').doc(\'ai\').set({groqKey:\'\',savedAt:new Date().toISOString()});document.getElementById(\'aiKeyStatus\').textContent=\'✗ Not Set\';document.getElementById(\'aiKeyStatus\').style.color=\'var(--rd)\';toast(\'Key cleared\',\'in\');})()">🗑 Clear</button>'
+  +'</div>'
+  +'</div>'
+  +'<div class="str"><div><div class="stl">Confidence Threshold</div><div class="sts">85%+ auto-approve | 50-84% Admin review | <50% auto-reject</div></div><div style="display:flex;align-items:center;gap:6px"><input id="aiThreshInp" type="number" min="50" max="99" value="85" style="width:55px;padding:6px 8px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-family:var(--m);text-align:center;outline:none"/><span style="font-size:11px;font-weight:700;color:var(--tx3)">%</span></div></div>'
+  +'<div class="str" style="flex-direction:column;align-items:stretch"><div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:6px">AI စစ်ဆေးပုံ Logic</div>'
+  +'<div style="display:flex;flex-direction:column;gap:4px">'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(0,176,92,.06);border:1px solid rgba(0,176,92,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--gn)">85%+</span><span style="font-size:10px;color:var(--tx2)">→ Auto Confirm ✅ (Receipt & Amount ကိုက်ညီ)</span></div>'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(240,165,0,.06);border:1px solid rgba(240,165,0,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--yw)">50-84%</span><span style="font-size:10px;color:var(--tx2)">→ Admin Review ⚠️ (Force Confirm/Reject ရွေး)</span></div>'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--rd)">&lt;50%</span><span style="font-size:10px;color:var(--tx2)">→ Auto Reject ❌ (User notification + Reason)</span></div>'
+  +'</div></div>'
   +'</div>';
 h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div class="stl">'+FC.projectId+'</div><span class="bg '+(fb?"su":"fa")+'" style="font-size:10px">'+(fb?"Online":"Offline")+'</span></div></div>';
 h+='<div class="stc"><div class="stl" style="color:var(--tx3)">PCA Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
@@ -1447,6 +1655,9 @@ function saveAIKey(){
   var v=document.getElementById("aiKeyInp").value.trim();
   if(!v){toast("Key မထည့်ရသေးပါ","er");return;}
   AI_KEY=v;
+  // Status indicator update
+  var st=document.getElementById("aiKeyStatus");
+  if(st){st.textContent="✓ Key Loaded";st.style.background="rgba(0,176,92,.1)";st.style.color="var(--gn)";st.style.border="1px solid rgba(0,176,92,.2)";}
   if(fb&&db){
     db.collection("config").doc("ai").set({groqKey:v,savedAt:new Date().toISOString()})
       .then(function(){toast("AI Key saved ✓ (Firebase ထဲ သိမ်းပြီး)","ok");})
@@ -1675,7 +1886,7 @@ async function aiVerifyReceipt(orderIdx, receiptBase64){
       sendTgNotify(tgReview);
       toast("Admin review needed ("+result.total+"%) — Telegram ပို့ပြီး","in");
     } else {
-      // Below 50% — auto reject, lock, notify user with reason
+      // Below 50% — auto reject via _doReject (sends full notification)
       if(order.status==="pending"){
         var failedFields=result.fields.filter(function(f){return!f.match;});
         var reasonLines=failedFields.map(function(f){
@@ -1688,45 +1899,11 @@ async function aiVerifyReceipt(orderIdx, receiptBase64){
         var rejectReason="🤖 AI စစ်ဆေးချက် — Score: "+result.total+"%\n\n"
           +"အောက်ပါအချက်များ မကိုက်ညီသောကြောင့် Reject ဖြစ်ပါသည်:\n"
           +reasonLines.join("\n")
-          +"\n\n✅ ဘာလုပ်ရမလဲ:\nReceipt မှန်ကန်ကြောင်း သေချာပြီး Order အသစ် ပြန်တင်ပေးပါ။";
-
-        O[orderIdx].status="failed";
-        O[orderIdx].rejectReason=rejectReason;
-        O[orderIdx].autoLocked=true;
-        O[orderIdx].autoRejected=true;
-        if(fb&&order.fbId){
-          db.collection("orders").doc(order.fbId).update({
-            status:"failed",
-            rejectReason:rejectReason,
-            rejectedAt:new Date().toISOString(),
-            autoRejected:true,
-            autoLocked:true,
-            aiScore:result.total,
-            aiExtracted:extracted,
-            aiFlag:true
-          });
-          var uid=order.authUser||order.pcaId||"guest";
-          db.collection("notifications").add({
-            userId:uid,
-            type:"rejected",
-            title:"❌ Order Reject — AI စစ်ဆေးချက် မအောင်မြင် ("+result.total+"%)",
-            message:"🎮 Game: "+(order.game||"—")+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")+"\n💰 Amount: "+fmtP(order.price)+"\n\n"+rejectReason,
-            orderId:order.txnId||order.fbId||"",
-            aiScore:result.total,
-            read:false,
-            timestamp:new Date().toISOString()
-          });
-        }
-        var tgMsg="🤖 <b>AI AUTO REJECTED</b>\n\n"
-          +"🎮 <b>"+order.game+"</b>\n"
-          +"👤 User: "+(order.authUser||order.userId)+"\n"
-          +"💰 "+fmtP(order.price)+"\n"
-          +"📊 AI Score: <b>"+result.total+"%</b>\n"
-          +"🔖 #"+(order.txnId||"")+"\n\n"
-          +"❌ ကျရောက်သော အချက်:\n"+reasonLines.join("\n");
-        sendTgNotify(tgMsg);
+          +"\n\n✅ ဘာလုပ်ရမလဲ:\nမှန်ကန်သော ငွေလွှဲ Receipt ပြေစာ screenshot ကို ပြည့်စုံစွာ ရိုက်ပြီး Order အသစ် ပြန်တင်ပေးပါ။"
+          +(extracted.transactionId?"\n\n🔢 Receipt TxID: "+extracted.transactionId:"")
+          +(extracted.paymentType?"\n📱 Payment Type detected: "+extracted.paymentType:"");
+        _doReject(orderIdx, rejectReason, {aiScore:result.total,aiExtracted:extracted,autoRejected:true,autoLocked:true,aiFlag:true});
         toast("AI Auto-rejected ("+result.total+"% — 50% အောက်)","er");
-        rOrd();rDash();
       }
     }
   }catch(err){
@@ -1771,8 +1948,8 @@ function renderAIResult(result,extracted,orderIdx,container){
   // Action buttons
   if(result.total<85){
     h+='<div style="display:flex;gap:6px;margin-top:8px">'
-      +'<button class="mb sv" style="font-size:11px;padding:10px" onclick="aO('+orderIdx+',\'confirmed\');cM()">Force Approve</button>'
-      +'<button class="mb dl" style="font-size:11px;padding:10px" onclick="aO('+orderIdx+',\'failed\');cM()">Reject</button>'
+      +'<button class="mb sv" style="font-size:11px;padding:10px" onclick="_doConfirm('+orderIdx+');cM()">Force Approve</button>'
+      +'<button class="mb dl" style="font-size:11px;padding:10px" onclick="cM();_promptRejectReason('+orderIdx+')">Reject</button>'
       +'</div>';
   }
   container.innerHTML=h;
