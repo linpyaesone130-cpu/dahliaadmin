@@ -143,6 +143,18 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
 .warn-no{flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f);}
 .warn-yes{flex:1;padding:13px;border-radius:13px;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--f);color:#fff;}
 .warn-yes.red{background:var(--rd);} .warn-yes.blue{background:var(--ac);}
+/* AI Receipt Verify */
+.rcv-score{display:flex;align-items:center;gap:8px;padding:12px;border-radius:12px;margin-bottom:10px}
+.rcv-score .sc-ring{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;border:3px solid}
+.rcv-score.high{background:rgba(0,176,92,.08);border:1px solid rgba(0,176,92,.2)}.rcv-score.high .sc-ring{border-color:var(--gn);color:var(--gn)}
+.rcv-score.mid{background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.2)}.rcv-score.mid .sc-ring{border-color:var(--yw);color:var(--yw)}
+.rcv-score.low{background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.2)}.rcv-score.low .sc-ring{border-color:var(--rd);color:var(--rd)}
+.rcv-field{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+.rcv-field:last-child{border:none}
+.rcv-field .rf-l{font-size:10px;color:var(--tx3);font-weight:600}
+.rcv-field .rf-v{font-size:11px;font-weight:800;color:var(--tx);display:flex;align-items:center;gap:4px}
+.rcv-field .rf-ok{color:var(--gn)}.rcv-field .rf-no{color:var(--rd)}.rcv-field .rf-un{color:var(--yw)}
+.ai-spin{width:20px;height:20px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 /* Calendar */
 .cal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:.2s;padding-bottom:env(safe-area-inset-bottom,0);}
 .cal-ov.on{opacity:1;pointer-events:all;}
@@ -570,7 +582,10 @@ function rOrd(){
       +'<div class="li-b">'
         +'<div class="li-t" style="font-size:13px;font-weight:800">'+o.game+'</div>'
         +'<div class="li-s" style="font-size:11px">'+o.userId+(o.serverId?' <span style="color:var(--tx3);font-size:9px">Server:'+o.serverId+'</span>':'')+'</div>'
-        +'<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+statusBadge+'<span style="font-size:9px;color:var(--tx3)">'+fd(o.timestamp)+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:5px;margin-top:3px">'+statusBadge+'<span style="font-size:9px;color:var(--tx3)">'+fd(o.timestamp)+'</span>'
+        +(o.aiFlag?'<span style="padding:1px 5px;border-radius:4px;background:rgba(123,104,238,.15);color:var(--pur);font-size:7px;font-weight:800;border:1px solid rgba(123,104,238,.25)">AI FLAG '+o.aiScore+'%</span>':"")
+        +(o.aiVerified?'<span style="padding:1px 5px;border-radius:4px;background:rgba(0,176,92,.12);color:var(--gn);font-size:7px;font-weight:800;border:1px solid rgba(0,176,92,.2)">AI '+o.aiScore+'%</span>':"")
+        +'</div>'
         +(o.pcaId||o.authName?'<div style="font-size:9px;color:var(--ac);font-weight:700;margin-top:2px">'+(o.pcaId||'')+(o.authName?' • '+o.authName:'')+'</div>':'')
       +'</div>'
       +'<div style="text-align:right;flex-shrink:0">'
@@ -849,7 +864,23 @@ function vO(i){
       +'<div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="confirmed"?" selected":"")+' value="confirmed">confirmed</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div>'
       +'<div class="fg"><div class="rw"><div><label>Game User ID</label><input id="xOU" value="'+o.userId+'"/></div><div><label>Server</label><input id="xOSv" value="'+(o.serverId||"")+'"/></div></div></div>'
       +rcp
-      +[{l:"Order",v:o.txnId},{l:"Game",v:o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("");
+      +[{l:"Order",v:o.txnId},{l:"Game",v:o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("")
+      // AI Verify section
+      +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">'
+      +'<div style="font-size:9px;font-weight:800;color:var(--pur);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:5px">'
+      +'<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:var(--pur);fill:none;stroke-width:2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/></svg>AI Receipt Verification</div>'
+      +(o.receiptUrl
+        ?'<div style="display:flex;gap:6px;margin-bottom:8px">'
+          +'<button class="bt pr" style="flex:1;justify-content:center;font-size:10px" onclick="autoVerifyExisting('+i+')">'
+          +'<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M9 12l2 2 4-4"/></svg>Check Uploaded Receipt</button>'
+          +'<button class="bt" style="flex:1;justify-content:center;font-size:10px" onclick="uploadAndVerify('+i+')">'
+          +'<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload New</button>'
+          +'</div>'
+        :'<button class="bt pr" style="width:100%;justify-content:center;margin-bottom:8px;font-size:10px" onclick="uploadAndVerify('+i+')">'
+          +'<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Receipt for AI Check</button>')
+      +(o.aiScore!==undefined?'<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">Last AI Score: <span style="font-weight:800;color:'+(o.aiScore>=85?"var(--gn)":o.aiScore>=60?"var(--yw)":"var(--rd)")+'">'+o.aiScore+'%</span>'+(o.aiVerifiedAt?' • '+fd(o.aiVerifiedAt):'')+'</div>':'')
+      +'<div id="aiVerifyResult"></div>'
+      +'</div>';
     document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="svO('+i+')">Save</button><button class="mb cn" onclick="cM()">Cancel</button>';
   }
   document.getElementById("mo").classList.add("on");
@@ -1211,12 +1242,250 @@ function rSet(){var tfs=twoFaEnabled?'<span class="bg su" style="font-size:10px"
 h+='</div><div class="stc"><div class="stc-t">Store</div><div class="str"><div class="stl">Logo</div><button class="bt pr" onclick="uploadCfgImg(&quot;logoImg&quot;)" style="font-size:10px">Upload Logo</button></div><div class="str"><div class="stl">Name</div><input class="sti" value="'+CFG.name+'" onchange="CFG.name=this.value;svC()"/></div><div class="str"><div class="stl">Currency</div><input class="sti" value="'+CFG.cur+'" style="width:80px" onchange="CFG.cur=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl" style="margin-bottom:6px;display:flex;align-items:center;gap:5px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:#26A6E2"><path d="M21.2 4.4L2.4 11.5c-.6.2-.6.7 0 .9l4.8 1.5 1.8 5.8c.2.5.7.5 1 .2l2.6-2.1 5.1 3.7c.5.4 1.1.1 1.2-.5L22.3 5.3c.2-.7-.4-1.2-1.1-.9z"/></svg>Telegram Support Username</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:700;color:var(--tx3);">@</span><input class="sti" placeholder="username (without @)" value="'+(CFG.tgUsername||"")+'" onchange="CFG.tgUsername=this.value.replace(/@/g,\'\').trim();svC()" style="flex:1"/></div><div style="font-size:9px;color:var(--tx3);margin-top:4px">Shown in FAQ page → Contact button</div></div><div class="str"><div class="stl">Hero Banner</div><button class="bt bl" onclick="uploadCfgImg(&quot;heroImg&quot;)" style="font-size:10px">Upload</button>'+(CFG.heroImg?'<img src="'+CFG.heroImg+'" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-left:6px"/>':'')+'</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Title</div><input class="sti" value="'+(CFG.heroTitle||"")+'" onchange="CFG.heroTitle=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Hero Subtitle</div><input class="sti" value="'+(CFG.heroSub||"")+'" onchange="CFG.heroSub=this.value;svC()"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Carousel Banners</div><button class="bt bl" onclick="uploadBanner()" style="font-size:10px;margin-bottom:6px">+ Add</button><button class="bt" onclick="viewBanners()" style="font-size:10px;margin-bottom:6px;margin-left:4px">View/Delete</button><div id="bannerPrev" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'+(CFG.banners&&CFG.banners.length?CFG.banners.length+" banner(s)":"No banners")+'</div><div style="font-size:8px;color:var(--tx3)">Tap + to add banner images</div></div><div class="str"><div><div class="stl">Auto-Approve</div></div><label class="tgl"><input type="checkbox" '+(CFG.autoApprove?"checked":"")+' onchange="CFG.autoApprove=this.checked;svC()"/><span class="ts"></span></label></div></div>';
 h+='<div class="stc"><div class="stc-t">Notifications</div><div class="str"><div class="stl">Sound</div><label class="tgl"><input type="checkbox" '+(sndEnabled?"checked":"")+' onchange="sndEnabled=this.checked"/><span class="ts"></span></label></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="playAlert();toast(\'Played\',\'ok\')">Play</button></div></div>';
 h+='<div class="stc"><div class="stc-t" style="color:var(--blu)">Telegram</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Bot Token</div><input class="sti" value="'+TG_BOT+'" placeholder="123456:ABC..." onchange="TG_BOT=this.value"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Chat ID</div><input class="sti" value="'+TG_CHAT+'" placeholder="-100123..." onchange="TG_CHAT=this.value"/></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="sendTgNotify(\'Test!\');toast(\'Sent\',\'ok\')">Send</button></div></div>';
+h+='<div class="stc"><div class="stc-t" style="color:var(--pur)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M9 12l2 2 4-4"/></svg>AI Receipt Verification</div>'
+  +'<div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Gemini API Key</div><div style="font-size:9px;color:var(--tx3);margin-bottom:6px">Get from aistudio.google.com — used for receipt OCR only</div><div style="display:flex;gap:6px"><input class="sti" type="password" id="aiKeyInp" value="'+AI_KEY+'" placeholder="AIza..." style="flex:1;font-family:var(--m)"/><button class="bt gn" onclick="AI_KEY=document.getElementById(\'aiKeyInp\').value;toast(\'Key saved\',\'ok\')">Save</button></div></div>'
+  +'<div class="str"><div><div class="stl">Confidence Threshold</div><div class="sts">Orders above this % are auto-approved</div></div><div style="display:flex;align-items:center;gap:6px"><input id="aiThreshInp" type="number" min="50" max="99" value="85" style="width:55px;padding:6px 8px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-family:var(--m);text-align:center;outline:none"/><span style="font-size:11px;font-weight:700;color:var(--tx3)">%</span></div></div>'
+  +'<div class="str"><div><div class="stl">Test AI Key</div></div><button class="bt bl" onclick="testAIKey()">Test</button></div>'
+  +'</div>';
 h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div class="stl">'+FC.projectId+'</div><span class="bg '+(fb?"su":"fa")+'" style="font-size:10px">'+(fb?"Online":"Offline")+'</span></div></div>';
 h+='<div class="stc"><div class="stl" style="color:var(--tx3)">PCA Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
 function setup2FA(){pendingSecret=genSecret();document.getElementById("tfaSetup").style.display="block";document.getElementById("tfaSecret").textContent=pendingSecret;var uri="otpauth://totp/PcaAdmin:"+(adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin")+"?secret="+pendingSecret+"&issuer=PcaAdmin&digits=6&period=30";document.getElementById("tfaQR").src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data="+encodeURIComponent(uri);}
 async function activate2FA(){var code=document.getElementById("tfaVerify").value.replace(/\s/g,"");if(code.length!==6){document.getElementById("tfaSetupErr").textContent="Enter 6 digits";return;}try{var now=Math.floor(Date.now()/1000),valid=false;for(var w=-1;w<=1;w++){if(code===await genTOTP(pendingSecret,now+w*30)){valid=true;break;}}if(valid){TOTP_SECRET=pendingSecret;twoFaEnabled=true;if(fb)db.collection("config").doc("2fa").set({enabled:true,secret:TOTP_SECRET});toast("2FA Active!","ok");rSet();}else{document.getElementById("tfaSetupErr").textContent="Wrong code";}}catch(e){document.getElementById("tfaSetupErr").textContent="Error";}}
 function disable2FA(){adWarn({title:"Disable 2FA?",msg:"Two-factor authentication will be turned off. Anyone with your password can login.",okLabel:"Disable",type:"red",icon:"lock",onOk:function(){twoFaEnabled=false;TOTP_SECRET="";if(fb)db.collection("config").doc("2fa").set({enabled:false,secret:""});toast("2FA Disabled","er");rSet();}});}
 function svC(){if(fb)db.collection("config").doc("store").set(CFG);toast("Saved","ok");}
+
+async function testAIKey(){
+  if(!AI_KEY){toast("Enter API key first","er");return;}
+  toast("Testing...","in");
+  try{
+    var r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="+AI_KEY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"hi"}]}]})});
+    if(r.ok){toast("API Key is valid","ok");}
+    else{var e=await r.json();toast("Invalid: "+((e.error&&e.error.message)||r.status),"er");}
+  }catch(e){toast("Connection failed","er");}
+}
+
+// ═══════════════════════════════════════════════════════
+// AI RECEIPT VERIFICATION ENGINE
+// Uses Claude Vision API to extract and verify receipt data
+// ═══════════════════════════════════════════════════════
+var AI_KEY=""; // Set in Settings → AI Receipt Key
+
+// Normalize Myanmar number strings (remove commas, spaces)
+function normAmt(s){
+  if(!s)return 0;
+  return parseInt(String(s).replace(/[,\s,၀-၉]/g,function(c){
+    var b="၀၁၂၃၄၅၆၇၈၉";var i=b.indexOf(c);return i>=0?i:"";
+  }).replace(/[^0-9]/g,""))||0;
+}
+
+// Fuzzy name match — checks if receiver name overlaps with payment account name
+function fuzzyNameMatch(extracted, expected){
+  if(!extracted||!expected)return 0;
+  var a=extracted.toLowerCase().replace(/[^a-z0-9\u1000-\u109f]/g," ").trim();
+  var b=expected.toLowerCase().replace(/[^a-z0-9\u1000-\u109f]/g," ").trim();
+  if(a===b)return 100;
+  var wa=a.split(/\s+/);var wb=b.split(/\s+/);
+  var match=0;
+  wa.forEach(function(w){if(w.length>1&&wb.some(function(x){return x.indexOf(w)>=0||w.indexOf(x)>=0;}))match++;});
+  return Math.round(match/Math.max(wa.length,wb.length)*100);
+}
+
+// Compute overall confidence score
+function computeScore(extracted, order, paymentAccount){
+  var scores=[];
+  // Amount check (40% weight)
+  var exAmt=normAmt(extracted.amount);
+  var ordAmt=order.price;
+  var amtScore=0;
+  if(exAmt>0&&ordAmt>0){
+    var diff=Math.abs(exAmt-ordAmt)/ordAmt;
+    amtScore=diff<0.01?100:diff<0.05?85:diff<0.1?60:0;
+  }
+  scores.push({key:"amount",label:"Amount",weight:40,score:amtScore,
+    extracted:exAmt>0?exAmt.toLocaleString()+" MMK":"Not found",
+    expected:ordAmt.toLocaleString()+" MMK",
+    match:amtScore>=85});
+
+  // Receiver name check (35% weight)
+  var nameScore=0;
+  var expName=paymentAccount||"";
+  if(extracted.receiver&&expName){
+    nameScore=fuzzyNameMatch(extracted.receiver,expName);
+  }
+  scores.push({key:"receiver",label:"Receiver",weight:35,score:nameScore,
+    extracted:extracted.receiver||"Not found",
+    expected:expName||"—",
+    match:nameScore>=60});
+
+  // Date check (15% weight)
+  var dateScore=0;
+  var today=new Date();
+  var todayStr=today.toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"});
+  if(extracted.date){
+    var ds=extracted.date.toLowerCase();
+    var d=today;
+    var yyyymmdd=d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate();
+    var ddmm=(d.getDate()<10?"0":"")+d.getDate()+"/"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1);
+    if(ds.indexOf(yyyymmdd)>=0||ds.indexOf(ddmm)>=0||ds.indexOf("today")>=0){dateScore=100;}
+    else{
+      // Check if date string contains today's day/month numbers
+      var dayN=String(d.getDate());var monN=String(d.getMonth()+1);
+      if(ds.indexOf(dayN)>=0&&ds.indexOf(monN)>=0)dateScore=70;
+      else dateScore=40; // date exists but doesn't match today
+    }
+  }
+  scores.push({key:"date",label:"Date",weight:15,score:dateScore,
+    extracted:extracted.date||"Not found",
+    expected:"Today ("+todayStr+")",
+    match:dateScore>=70});
+
+  // Payment type check (10% weight)
+  var typeScore=50; // neutral if can't determine
+  var payType=(extracted.paymentType||"").toLowerCase();
+  var ordPay=(order.payment||"").toLowerCase();
+  if(payType&&ordPay){
+    if(ordPay.indexOf("kbz")>=0&&(payType.indexOf("kbz")>=0||payType.indexOf("kpay")>=0))typeScore=100;
+    else if(ordPay.indexOf("wave")>=0&&payType.indexOf("wave")>=0)typeScore=100;
+    else if(ordPay.indexOf("aya")>=0&&payType.indexOf("aya")>=0)typeScore=100;
+    else if(ordPay.indexOf("cb")>=0&&payType.indexOf("cb")>=0)typeScore=100;
+    else typeScore=20;
+  }
+  scores.push({key:"type",label:"Payment Type",weight:10,score:typeScore,
+    extracted:extracted.paymentType||"Unknown",
+    expected:order.payment||"—",
+    match:typeScore>=80});
+
+  // Weighted total
+  var total=scores.reduce(function(s,x){return s+x.score*x.weight/100;},0);
+  return{total:Math.round(total),fields:scores};
+}
+
+// Main AI verify function — called from order detail
+async function aiVerifyReceipt(orderIdx, receiptBase64){
+  var order=O[orderIdx];
+  if(!order){toast("Order not found","er");return;}
+  if(!receiptBase64){toast("No receipt image","er");return;}
+  if(!AI_KEY){toast("Set AI Key in Settings first","er");return;}
+
+  // Find matching payment account name
+  var payAcc=P.find(function(p){return p.n===order.payment;});
+  var payHd=payAcc?payAcc.hd:"";
+
+  // Show loading in modal
+  var loadEl=document.getElementById("aiVerifyResult");
+  if(loadEl){loadEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid var(--bd)"><div class="ai-spin"></div><span style="font-size:11px;font-weight:700;color:var(--tx2)">AI is analyzing receipt...</span></div>';}
+
+  var prompt='You are a Myanmar payment receipt OCR extractor. Analyze this payment receipt screenshot carefully.\n\nExtract ONLY these fields in JSON format:\n{\n  "amount": "numeric amount in MMK (numbers only, no commas)",\n  "receiver": "receiver/recipient name exactly as shown",\n  "sender": "sender name if visible",\n  "date": "transaction date as shown",\n  "time": "transaction time if visible",\n  "paymentType": "KBZPay or Wave Pay or AYA Pay or CB Pay or Unknown",\n  "transactionId": "transaction ID/reference number if visible",\n  "status": "Success or Completed or Failed or Unknown"\n}\n\nIMPORTANT:\n- For KBZPay receipts: look for "လက်ခံသူ" (receiver) and "ငွေပမာဏ" (amount)\n- For Wave Pay: look for "Receiver" and "Amount"\n- For AYA Pay: look for recipient name and transfer amount\n- If a field is not visible, use null\n- Return ONLY valid JSON, no other text';
+
+  try{
+    var imgData=receiptBase64.split(",")[1]||receiptBase64;
+    var resp=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="+AI_KEY,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        contents:[{parts:[
+          {inline_data:{mime_type:"image/jpeg",data:imgData}},
+          {text:prompt}
+        ]}],
+        generationConfig:{maxOutputTokens:600}
+      })
+    });
+    if(!resp.ok){var e=await resp.json();throw new Error(e.error&&e.error.message||"API error "+resp.status);}
+    var data=await resp.json();
+    var raw=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text||"{}";
+    var clean=raw.replace(/```json|```/g,"").trim();
+    var extracted={};
+    try{extracted=JSON.parse(clean);}catch(pe){
+      // Try extract JSON from text
+      var m=raw.match(/\{[\s\S]*\}/);
+      if(m)try{extracted=JSON.parse(m[0]);}catch(e2){}
+    }
+
+    var result=computeScore(extracted,order,payHd);
+    renderAIResult(result,extracted,orderIdx,loadEl);
+
+    // Auto actions based on score
+    if(result.total>=85){
+      // High confidence — auto approve
+      if(order.status==="pending"){
+        aO(orderIdx,"confirmed");
+        toast("Auto-approved ("+result.total+"% match)","ok");
+        if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiVerified:true,aiScore:result.total,aiExtracted:extracted,aiVerifiedAt:new Date().toISOString()});
+      }
+    } else {
+      // Low confidence — flag for admin review
+      if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiFlag:true,aiScore:result.total,aiExtracted:extracted,aiFlaggedAt:new Date().toISOString()});
+      toast("Flagged for review ("+result.total+"%)","in");
+    }
+  }catch(err){
+    if(loadEl)loadEl.innerHTML='<div style="padding:12px;background:rgba(229,57,53,.06);border-radius:10px;border:1px solid rgba(229,57,53,.15);font-size:11px;color:var(--rd);font-weight:700">AI Error: '+err.message+'</div>';
+    toast("AI check failed","er");
+  }
+}
+
+function renderAIResult(result,extracted,orderIdx,container){
+  if(!container)return;
+  var lvl=result.total>=85?"high":result.total>=60?"mid":"low";
+  var lvlLabel=result.total>=85?"Verified":result.total>=60?"Review Needed":"Suspicious";
+  var lvlColor=result.total>=85?"var(--gn)":result.total>=60?"var(--yw)":"var(--rd)";
+
+  var h='<div class="rcv-score '+lvl+'">'
+    +'<div class="sc-ring">'+result.total+'%</div>'
+    +'<div><div style="font-size:13px;font-weight:900;color:'+lvlColor+'">'+lvlLabel+'</div>'
+    +'<div style="font-size:9px;color:var(--tx3);margin-top:2px">'+(result.total>=85?"Auto-approved by AI":result.total>=60?"Needs admin review":"Possible fake receipt")+'</div></div>'
+    +'</div>';
+
+  h+='<div style="background:var(--sf2);border-radius:10px;padding:10px;margin-bottom:8px">';
+  result.fields.forEach(function(f){
+    var ic=f.match
+      ?'<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--gn);fill:none;stroke-width:2.5;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>'
+      :'<svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--rd);fill:none;stroke-width:2.5;flex-shrink:0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    var valColor=f.match?"rf-ok":"rf-no";
+    h+='<div class="rcv-field">'
+      +'<div class="rf-l">'+f.label+' <span style="font-size:8px;color:var(--tx3)">('+f.weight+'%)</span></div>'
+      +'<div class="rf-v '+valColor+'">'+ic+'<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+f.extracted+'">'+f.extracted+'</span></div>'
+      +'</div>';
+  });
+  h+='</div>';
+
+  if(extracted.transactionId){
+    h+='<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">TxID: <span style="font-family:var(--m);color:var(--ac)">'+extracted.transactionId+'</span></div>';
+  }
+
+  // Action buttons
+  if(result.total<85){
+    h+='<div style="display:flex;gap:6px;margin-top:8px">'
+      +'<button class="mb sv" style="font-size:11px;padding:10px" onclick="aO('+orderIdx+',\'confirmed\');cM()">Force Approve</button>'
+      +'<button class="mb dl" style="font-size:11px;padding:10px" onclick="aO('+orderIdx+',\'failed\');cM()">Reject</button>'
+      +'</div>';
+  }
+  container.innerHTML=h;
+}
+
+// Upload receipt for AI check — called from order detail modal
+function uploadAndVerify(orderIdx){
+  var inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.style.display="none";
+  document.body.appendChild(inp);
+  inp.addEventListener("change",function(){
+    if(inp.files&&inp.files[0]){
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var b64=e.target.result;
+        aiVerifyReceipt(orderIdx,b64);
+      };
+      reader.readAsDataURL(inp.files[0]);
+    }
+    document.body.removeChild(inp);
+  });inp.click();
+}
+
+// Auto-verify when order has receiptUrl already stored
+function autoVerifyExisting(orderIdx){
+  var o=O[orderIdx];
+  if(!o||!o.receiptUrl){toast("No receipt stored","er");return;}
+  // receiptUrl is already base64
+  aiVerifyReceipt(orderIdx,o.receiptUrl);
+}
 
 // Default data — matches Store hardcoded data
 var DEF_GAMES=[
