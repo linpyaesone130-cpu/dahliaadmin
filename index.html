@@ -598,9 +598,7 @@ function rOrd(){
           +'</div>'
           :(isFail
             ?'<div style="display:flex;gap:3px;margin-top:4px">'
-              +(o.autoLocked
-                ?'<div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:6px;border:1px solid var(--rd);background:rgba(229,57,53,.06)"><svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--rd);fill:none;stroke-width:2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span style="font-size:8px;color:var(--rd);font-weight:800">AUTO LOCKED — Receipt မပါ</span></div>'
-                :'<button style="padding:4px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--sf2);color:var(--tx2);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();vO('+i+')"><svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Edit</button>')
+              +'<div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:6px;border:1px solid var(--rd);background:rgba(229,57,53,.06)"><svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:var(--rd);fill:none;stroke-width:2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span style="font-size:8px;color:var(--rd);font-weight:800">'+(o.autoLocked?"AUTO LOCKED — Receipt မပါ":"FAILED — Locked")+'</span></div>'
               +'<button style="padding:4px 8px;border-radius:6px;border:1px solid var(--rd);background:none;color:var(--rd);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:3px" onclick="event.stopPropagation();delOrder('+i+')" title="Delete"><svg viewBox="0 0 24 24" style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>'
             +'</div>'
             :'<div style="display:flex;align-items:center;gap:3px;margin-top:5px"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--gn);fill:none;stroke-width:2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span style="font-size:8px;color:var(--gn);font-weight:800;letter-spacing:.2px">Locked</span></div>'))
@@ -825,6 +823,14 @@ function aO(i,s){
   tgMsg+=writeStatus==="confirmed"?"Items will be delivered shortly! ⚡":"Contact support for help.";
   sendTgNotify(tgMsg);
   toast(writeStatus==="confirmed"?"Order Confirmed":"Order Rejected",writeStatus==="confirmed"?"ok":"er");
+  // ── Giveaway Milestone check ──
+  if(writeStatus==="confirmed"){
+    var userEmail=O[i].authUser;
+    if(userEmail&&userEmail!=="__guest__"){
+      var confirmedCount=O.filter(function(o){return(o.status==="confirmed"||o.status==="success")&&o.authUser===userEmail;}).length;
+      checkGiveawayMilestone(userEmail,confirmedCount);
+    }
+  }
   rOrd();rDash();
 }
 function vO(i){
@@ -861,13 +867,15 @@ function vO(i){
       +'<div style="font-size:13px;font-weight:800">'+usr+'</div></div>'
       +infoRows+rcp;
     document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="cM()" style="background:var(--ac)">Close</button>';
-  } else if(o.autoLocked){
-    // Auto-rejected & locked — no edit allowed
+  } else if(o.status==="failed"||o.autoLocked){
+    // Failed & locked — no edit allowed (admin view only)
+    var lockedTitle=o.autoLocked?"⚡ AUTO REJECTED & LOCKED":"❌ ORDER FAILED — LOCKED";
+    var lockedMsg=o.rejectReason||(o.autoLocked?"Receipt မပါတဲ့ကြောင့် Auto Reject ဖြစ်ပါသည်":"Order failed ဖြစ်ပါသည်။");
     document.getElementById("mBd").innerHTML=
       '<div style="margin-bottom:10px;padding:12px;background:rgba(229,57,53,.1);border-radius:12px;border:2px solid rgba(229,57,53,.3);display:flex;gap:8px;align-items:flex-start">'
       +'<svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:var(--rd);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>'
-      +'<div><div style="font-size:12px;font-weight:900;color:var(--rd);letter-spacing:.3px">⚡ AUTO REJECTED & LOCKED</div>'
-      +'<div style="font-size:10px;color:var(--tx2);margin-top:4px;line-height:1.55">'+(o.rejectReason||"Receipt မပါတဲ့ကြောင့် Auto Reject ဖြစ်ပါသည်")+'</div>'
+      +'<div><div style="font-size:12px;font-weight:900;color:var(--rd);letter-spacing:.3px">'+lockedTitle+'</div>'
+      +'<div style="font-size:10px;color:var(--tx2);margin-top:4px;line-height:1.55">'+lockedMsg+'</div>'
       +'<div style="font-size:9px;color:var(--tx3);margin-top:4px;font-weight:700">🔒 User ဘက်မှ Edit လုပ်၍မရပါ</div></div></div>'
       +'<div style="padding:10px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid rgba(0,102,255,.1);margin-bottom:12px">'
       +'<div style="font-size:9px;font-weight:700;color:var(--ac);text-transform:uppercase;margin-bottom:4px">Submitted by</div>'
@@ -876,7 +884,7 @@ function vO(i){
     document.getElementById("mFt").innerHTML=
       '<button class="mb dl" onclick="delOrder('+i+');cM()">Delete Order</button>'
       +'<button class="mb cn" onclick="cM()">Close</button>';
-  } else {
+  } else if(o.status==="pending"){
     document.getElementById("mBd").innerHTML=
       rejectBanner
       +'<div style="padding:10px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid rgba(0,102,255,.1);margin-bottom:12px">'
@@ -907,30 +915,139 @@ function vO(i){
   document.getElementById("mo").classList.add("on");
 }
 function svO(i){O[i].status=document.getElementById("xOS").value;O[i].userId=document.getElementById("xOU").value;O[i].serverId=document.getElementById("xOSv").value;if(fb&&O[i].fbId)db.collection("orders").doc(O[i].fbId).update({status:O[i].status,userId:O[i].userId,serverId:O[i].serverId});toast("Saved","ok");rOrd();rDash();cM();}
+
+// ═══ GIVEAWAY MILESTONE — 20 confirmed orders check ═══
+var GIVEAWAY_MILESTONE=20;
+function checkGiveawayMilestone(userEmail, orderCount){
+  if(!userEmail||userEmail==="__guest__")return;
+  // Only notify on exact milestone (20, 40, 60...) to avoid spam
+  if(orderCount%GIVEAWAY_MILESTONE!==0)return;
+  var tgCfg=_tgCfg;
+  var tgUrl="";
+  if(tgCfg&&tgCfg.botToken&&tgCfg.adminId){
+    tgUrl="https://t.me/"+tgCfg.adminId;
+  }
+  var notifMsg="🎁 Giveaway Eligible!\n\n"
+    +"🏆 "+orderCount+" orders ပြည့်သောကြောင့် Giveaway ဆုလာ ထုတ်ယူပိုင်ခွင့်ရှိပါသည်!\n\n"
+    +"📱 Admin Telegram ကို ဆက်သွယ်ပြီး ဆုလာ လာထုတ်ပါ။\n"
+    +(tgUrl?"👉 "+tgUrl:"")
+    +"\n\n⏰ Claim မလုပ်ပါက 7 ရက်အတွင်း သက်တမ်းကုန်ဆုံးမည်";
+  // Send to user notification bell
+  if(fb&&db){
+    db.collection("notifications").add({
+      userId:userEmail,
+      type:"giveaway",
+      title:"🎁 Giveaway — "+orderCount+" Orders Milestone!",
+      message:notifMsg,
+      orderCount:orderCount,
+      claimDeadline:new Date(Date.now()+7*24*3600*1000).toISOString(),
+      read:false,
+      timestamp:new Date().toISOString()
+    });
+  }
+  // Alert admin via Telegram
+  var tgText="🎉 <b>GIVEAWAY MILESTONE</b>\n\n"
+    +"👤 User: <b>"+userEmail+"</b>\n"
+    +"🏆 Total Confirmed Orders: <b>"+orderCount+"</b>\n"
+    +"📣 User ကို Notification ပို့ပြီးပါပြီ\n"
+    +"✅ Admin ဘက်မှ ဆုပေးမည်ဆိုလျှင် User ကို ဆက်သွယ်ပါ";
+  sendTgNotify(tgText);
+  toast("🎁 Milestone! User "+orderCount+" orders — Giveaway notification sent","ok");
+}
+
+// ═══ GIVEAWAY tab in Content section ═══
+function rgvAdmin(){
+  var h='<div class="cw"><div class="cw-h"><div class="cw-t" style="color:#f59e0b"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#f59e0b;fill:none;stroke-width:1.7"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>🎁 Giveaway Milestones</div></div>';
+  // Show users who have reached milestones
+  var um={};
+  O.forEach(function(o){
+    if(o.status!=="confirmed"&&o.status!=="success")return;
+    var u=o.authUser||"__guest__";
+    if(u==="__guest__")return;
+    if(!um[u])um[u]={email:u,name:o.authName||"",cnt:0};
+    um[u].cnt++;
+  });
+  var ul=Object.values(um).filter(function(u){return u.cnt>0;}).sort(function(a,b){return b.cnt-a.cnt;});
+  if(!ul.length){h+='<div class="emp">No confirmed orders yet</div>';h+='</div>';return h;}
+  h+=ul.map(function(u){
+    var milestone=Math.floor(u.cnt/GIVEAWAY_MILESTONE)*GIVEAWAY_MILESTONE;
+    var next=milestone+GIVEAWAY_MILESTONE;
+    var pct=((u.cnt-milestone)/(GIVEAWAY_MILESTONE))*100;
+    var earned=Math.floor(u.cnt/GIVEAWAY_MILESTONE);
+    var barColor=earned>0?"var(--yw)":"var(--ac)";
+    return'<div class="li" style="padding:12px 14px;flex-direction:column;align-items:flex-start;gap:6px">'
+      +'<div style="display:flex;width:100%;align-items:center;justify-content:space-between">'
+      +'<div><div style="font-size:12px;font-weight:800">'+u.email+'</div>'
+      +(u.name?'<div style="font-size:9px;color:var(--tx3)">'+u.name+'</div>':'')
+      +'</div>'
+      +'<div style="text-align:right"><div style="font-size:13px;font-weight:900;color:'+barColor+'">'+u.cnt+'</div>'
+      +'<div style="font-size:8px;color:var(--tx3)">orders</div></div>'
+      +'</div>'
+      +'<div style="width:100%">'
+      +'<div style="display:flex;justify-content:space-between;font-size:8px;color:var(--tx3);margin-bottom:3px">'
+      +'<span>'+(earned>0?'🏆 '+earned+' giveaway earned':'Progress to next')+'</span>'
+      +'<span>'+u.cnt+'/'+next+'</span>'
+      +'</div>'
+      +'<div style="height:6px;border-radius:6px;background:var(--sf2);overflow:hidden">'
+      +'<div style="height:100%;border-radius:6px;background:'+barColor+';width:'+Math.min(pct,100)+'%;transition:width .4s"></div>'
+      +'</div>'
+      +'</div>'
+      +(earned>0?'<button class="bt yw" style="width:100%;justify-content:center;font-size:10px" onclick="sendGiveawayReminder(\''+u.email+'\','+u.cnt+')">📤 Re-send Giveaway Notification</button>':'')
+      +'</div>';
+  }).join("");
+  h+='<div style="padding:12px 14px;border-top:1px solid var(--bd);font-size:9px;color:var(--tx3);text-align:center">Milestone: Every <b>'+GIVEAWAY_MILESTONE+' confirmed orders</b> = 1 Giveaway reward</div>';
+  h+='</div>';
+  return h;
+}
+function sendGiveawayReminder(email,cnt){
+  checkGiveawayMilestone(email,Math.floor(cnt/GIVEAWAY_MILESTONE)*GIVEAWAY_MILESTONE);
+  toast("Reminder sent to "+email,"ok");
+}
 function exportCSV(){var ls=oF==="all"?O:O.filter(function(o){return o.status===oF});if(!ls.length){toast("No orders","er");return;}var csv="Order,Game,User,Amount,Price,Payment,Status,Date\n";ls.forEach(function(o){csv+=o.txnId+","+o.game+","+o.userId+","+o.amount+","+o.price+","+o.payment+","+o.status+","+fd(o.timestamp)+"\n";});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="orders.csv";a.click();toast("Exported","ok");}
 
 var cTab="games",EVT=[],PRM=[];
-function rContent(){var h='<div style="display:flex;gap:4px;margin-bottom:12px"><button class="bt'+(cTab==="games"?" pr":"")+'" onclick="cTab=\'games\';rContent()" style="flex:1;justify-content:center">Games</button><button class="bt'+(cTab==="events"?" bl":"")+'" onclick="cTab=\'events\';rContent()" style="flex:1;justify-content:center">Events</button><button class="bt'+(cTab==="promos"?" gn":"")+'" onclick="cTab=\'promos\';rContent()" style="flex:1;justify-content:center">Account</button></div>';if(cTab==="games")h+=rgT();if(cTab==="events")h+=reT();if(cTab==="promos")h+=rpT();if(cTab==="giveaways")h+=rgvT();document.getElementById("pg-content").innerHTML=h;}
+function rContent(){var h='<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"><button class="bt'+(cTab==="games"?" pr":"")+'" onclick="cTab=\'games\';rContent()" style="flex:1;justify-content:center">Games</button><button class="bt'+(cTab==="events"?" bl":"")+'" onclick="cTab=\'events\';rContent()" style="flex:1;justify-content:center">Events</button><button class="bt'+(cTab==="promos"?" gn":"")+'" onclick="cTab=\'promos\';rContent()" style="flex:1;justify-content:center">Account</button><button class="bt'+(cTab==="giveaways"?" yw":"")+'" onclick="cTab=\'giveaways\';rContent()" style="flex:1;justify-content:center">🎁 Giveaway</button></div>';if(cTab==="games")h+=rgT();if(cTab==="events")h+=reT();if(cTab==="promos")h+=rpT();if(cTab==="giveaways")h+=rgvAdmin();document.getElementById("pg-content").innerHTML=h;}
 function rgT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Games ('+G.length+')</div><button class="bt pr" onclick="eG(-1)">+ Add</button></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px">';
   h+=G.map(function(g,i){
     var imgHtml=g.img
-      ?'<div class="grid-card-skel"></div><img class="grid-card-img" src="'+g.img+'" onload="this.classList.add(\'loaded\');this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      ?'<div class="grid-card-skel"></div><img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;object-position:center;position:absolute;inset:0;display:block;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
       :'<div class="grid-card-skel"></div>';
-    return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="eG('+i+')">'
-      +'<div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden">'+imgHtml+'</div>'
+    return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:all .2s" onclick="eG('+i+')">'
+      +'<div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;background:var(--sf2)">'+imgHtml+'</div>'
       +'<div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+g.n+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+g.cur+' • '+g.pl+'</div>'
       +'<div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();eG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No games</div>';
   h+='</div></div>';
   return h;
 }
-function eG(i){var g=i>=0?G[i]:{n:"",e:"🎮",c:"#1d4ed8",cur:"",ci:"💎",pl:"Mobile",img:"",pr:[{d:0,p:0}],regions:[],showSid:false};document.getElementById("mTi").textContent=i>=0?"Edit Game":"Add Game";var ip=g.img?'<img src="'+g.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Tap to add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Card Image</label><div class="img-up" onclick="uploadImg(&quot;gImg&quot;,this)">'+ip+'</div><input type="hidden" id="gImg" value="'+(g.img||"")+'"/></div><div class="fg"><label>Banner Image (detail page)</label><div class="img-up" onclick="uploadImg(&quot;gBnr&quot;,this)">'+(g.bannerImg?'<img src="'+g.bannerImg+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Tap for banner</span>')+'</div><input type="hidden" id="gBnr" value="'+(g.bannerImg||"")+'"/></div><div class="fg"><label>Name</label><input id="gN" value="'+g.n+'"/></div><div class="fg"><label>Currency Name</label><input id="gCr" value="'+g.cur+'" placeholder="e.g. Diamonds, UC, Gems"/></div><div class="fg"><div class="rw"><div style="display:none"><label>Color</label><input id="gCo" type="color" value="'+(g.c||'#1d4ed8')+'" style="height:40px;padding:2px"/></div><div><label>Platform</label><select id="gPl"><option'+(g.pl==="Mobile"?" selected":"")+'>Mobile</option><option'+(g.pl==="PC"?" selected":"")+'>PC</option><option'+(g.pl==="Cross"?" selected":"")+'>Cross</option></select></div></div></div><div class="fg"><div style="display:flex;align-items:center;justify-content:space-between"><label style="margin:0">Show Server ID</label><label class="tgl"><input type="checkbox" id="gSid" '+(g.showSid?"checked":"")+'/><span class="ts"></span></label></div></div><div class="fg"><label>Packages</label><div class="pkl" id="pkL">'+g.pr.map(function(p){return'<div class="pkr"><input placeholder="Amount" value="'+p.d+'" class="pkd"><input placeholder="Price" value="'+p.p+'" class="pkp"><input placeholder="Tap for image" value="'+(p.img||"")+'" class="pki" style="flex:1.5;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>'}).join("")+'</div><button class="pka" onclick="addPk()">+ Package</button></div><div style="font-size:10px;font-weight:800;color:var(--blu);text-transform:uppercase;margin:10px 0 6px">Regions / Servers</div><div class="fg"><div id="regL">'+(g.regions||[]).map(function(r,ri){return'<div class="pkr" style="flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" value="'+r.name+'" class="rgN" style="flex:1"><input placeholder="Flag 🇲🇲" value="'+(r.flag||"")+'" class="rgF" style="width:50px"><input placeholder="Tap to add image" value="'+(r.img||"")+'" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>'}).join("")+'</div><button class="pka" onclick="addReg()">+ Region</button><div style="font-size:8px;color:var(--tx3);margin-top:4px">Each region uses default packages. Or edit region-specific prices in Firebase.</div></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sG('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dG('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
+function eG(i){
+  var g=i>=0?G[i]:{n:"",e:"🎮",c:"#1d4ed8",cur:"",ci:"💎",pl:"Mobile",img:"",bannerImg:"",pr:[{d:0,p:0}],regions:[],showSid:false};
+  document.getElementById("mTi").textContent=i>=0?"Edit Game":"Add Game";
+  var cardIp=g.img?'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Card Image</span>';
+  var bnrIp=g.bannerImg?'<img src="'+g.bannerImg+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Banner Image</span>';
+  document.getElementById("mBd").innerHTML=
+    '<div class="fg"><label>Card Image</label>'
+    +'<div class="img-up" style="height:130px;position:relative" onclick="uploadImg(\'gImg\',this)">'+cardIp+'</div>'
+    +'<input type="hidden" id="gImg" value="'+(g.img||"")+'"/></div>'
+    +'<div class="fg"><label>Banner Image (Detail Page)</label>'
+    +'<div class="img-up" style="height:130px;position:relative" onclick="uploadImg(\'gBnr\',this)">'+bnrIp+'</div>'
+    +'<input type="hidden" id="gBnr" value="'+(g.bannerImg||"")+'"/></div>'
+    +'<div class="fg"><label>Name</label><input id="gN" value="'+g.n+'"/></div>'
+    +'<div class="fg"><label>Currency Name</label><input id="gCr" value="'+g.cur+'" placeholder="e.g. Diamonds, UC, Gems"/></div>'
+    +'<div class="fg"><div class="rw"><div style="display:none"><label>Color</label><input id="gCo" type="color" value="'+(g.c||'#1d4ed8')+'" style="height:40px;padding:2px"/></div><div><label>Platform</label><select id="gPl"><option'+(g.pl==="Mobile"?" selected":"")+'>Mobile</option><option'+(g.pl==="PC"?" selected":"")+'>PC</option><option'+(g.pl==="Cross"?" selected":"")+'>Cross</option></select></div></div></div>'
+    +'<div class="fg"><div style="display:flex;align-items:center;justify-content:space-between"><label style="margin:0">Show Server ID</label><label class="tgl"><input type="checkbox" id="gSid" '+(g.showSid?"checked":"")+'/><span class="ts"></span></label></div></div>'
+    +'<div class="fg"><label>Packages</label><div class="pkl" id="pkL">'
+    +g.pr.map(function(p){return'<div class="pkr"><input placeholder="Amount" value="'+p.d+'" class="pkd"><input placeholder="Price (MMK)" value="'+p.p+'" class="pkp"><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>';}).join("")
+    +'</div><button class="pka" onclick="addPk()">+ Package</button></div>';
+  document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sG('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dG('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';
+  document.getElementById("mo").classList.add("on");
+}
 function promptImg(){uploadImg("gImg",document.querySelector(".img-up"));}
 function addReg(){document.getElementById("regL").insertAdjacentHTML("beforeend",'<div class="pkr" style="flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" class="rgN" style="flex:1"><input placeholder="Flag" class="rgF" style="width:50px"><input placeholder="Tap for image" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
-function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",'<div class="pkr"><input placeholder="Amount" class="pkd"><input placeholder="Price" class="pkp"><input placeholder="Tap for image" class="pki" style="flex:1.5;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
-function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg").value,bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,pr:[]};document.querySelectorAll(".pkd").forEach(function(el,j){var pe=document.querySelectorAll(".pkp")[j];var pi=document.querySelectorAll(".pki")[j];if(el.value&&pe.value)o.pr.push({d:el.value,p:parseInt(pe.value)||0,img:pi?pi.value:""});});var regs=[];document.querySelectorAll(".rgN").forEach(function(el,j){var fl=document.querySelectorAll(".rgF")[j];var im=document.querySelectorAll(".rgI")[j];if(el.value)regs.push({name:el.value,flag:fl?fl.value:"",img:im?im.value:"",pr:o.pr});});o.regions=regs;if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb)db.collection("games").doc(o.n).set(o);toast("Game saved","ok");rContent();cM();}
+function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",'<div class="pkr"><input placeholder="Amount" class="pkd"><input placeholder="Price (MMK)" class="pkp"><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
+function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg")?document.getElementById("gImg").value:"",bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,regions:[],pr:[]};document.querySelectorAll(".pkd").forEach(function(el,j){var pe=document.querySelectorAll(".pkp")[j];if(el.value&&pe.value)o.pr.push({d:el.value,p:parseInt(pe.value)||0});});if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb)db.collection("games").doc(o.n).set(o);toast("Game saved","ok");rContent();cM();}
 function dG(i){adWarn({title:"Delete Game?",msg:"Delete \""+G[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("games").doc(G[i].n).delete();G.splice(i,1);toast("Deleted","ok");rContent();}});}
 var evAdmFilter="all";
 function reT(){
@@ -944,7 +1061,7 @@ function reT(){
   h+=list.map(function(ev){
     var idx=EVT.indexOf(ev);
     var imgHtml=ev.img
-      ?'<div class="grid-card-skel"></div><img class="grid-card-img" src="'+ev.img+'" onload="this.classList.add(\'loaded\');this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      ?'<div class="grid-card-skel"></div><img src="'+ev.img+'" style="width:100%;height:100%;object-fit:cover;object-position:center;position:absolute;inset:0;display:block;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
       :'<div class="grid-card-skel"></div>';
     var bdgCol=ev.badge==="live"?"background:#00b05c":ev.badge==="new"?"background:var(--ac)":"background:var(--yw)";
     var bdgBg=ev.badge==="live"?"#00b05c":ev.badge==="new"?"#2ca5e0":"#f0a500";
@@ -1103,9 +1220,9 @@ function rgvT(){
   h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px">';
   h+=GVA.map(function(g,i){
     var imgHtml=g.img
-      ?'<div class="grid-card-skel"></div><img class="grid-card-img" src="'+g.img+'" onload="this.classList.add(\'loaded\');this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
+      ?'<div class="grid-card-skel"></div><img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;object-position:center;position:absolute;inset:0;display:block;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
       :'<div class="grid-card-skel"></div>';
-    return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="eGv('+i+')"><div style="width:100%;aspect-ratio:1;position:relative;overflow:hidden">'+imgHtml+'</div><div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;color:var(--tx)">'+g.t+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+g.game+' • '+g.prize+'</div><div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();eGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
+    return'<div style="border-radius:14px;border:1px solid var(--bd);overflow:hidden;background:var(--sf);cursor:pointer;transition:border-color .2s" onclick="eGv('+i+')"><div style="width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;background:var(--sf2)">'+imgHtml+'</div><div style="padding:8px 10px"><div style="font-size:11px;font-weight:800;color:var(--tx)">'+g.t+'</div><div style="font-size:9px;color:var(--tx3);margin-top:2px">'+g.game+' • '+g.prize+'</div><div style="display:flex;gap:3px;margin-top:6px"><div class="ab" style="color:var(--ac);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();eGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="color:var(--rd);width:24px;height:24px;background:var(--sf2)" onclick="event.stopPropagation();dGv('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div></div></div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No giveaways</div>';
   h+='</div></div>';return h;
 }
@@ -1492,17 +1609,104 @@ async function aiVerifyReceipt(orderIdx, receiptBase64){
     renderAIResult(result,extracted,orderIdx,loadEl);
 
     // Auto actions based on score
-    if(result.total>=85){
-      // High confidence — auto approve
+    if(result.total>=80){
+      // 80%+ — auto approve
       if(order.status==="pending"){
         aO(orderIdx,"confirmed");
         toast("Auto-approved ("+result.total+"% match)","ok");
         if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiVerified:true,aiScore:result.total,aiExtracted:extracted,aiVerifiedAt:new Date().toISOString()});
       }
-    } else {
-      // Low confidence — flag for admin review
+    } else if(result.total>=50){
+      // 50–79% — flag + send full details to Telegram for admin decision
       if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiFlag:true,aiScore:result.total,aiExtracted:extracted,aiFlaggedAt:new Date().toISOString()});
-      toast("Flagged for review ("+result.total+"%)","in");
+
+      var reviewFields=result.fields.map(function(f){
+        var icon=f.match?"✅":"❌";
+        var val="";
+        if(f.label==="Amount")val="Receipt: "+(extracted.amount||"မတွေ့")+" MMK | Order: "+order.price+" MMK";
+        else if(f.label==="Receiver")val="Receipt: "+(extracted.receiver||"မတွေ့")+" | Expected: "+(P.find(function(p){return p.n===order.payment;})||{}).hd||"";
+        else if(f.label==="Status")val=extracted.status||"မတွေ့";
+        else if(f.label==="Date")val=extracted.date||"မတွေ့";
+        else val=f.extracted||"မတွေ့";
+        return icon+" "+f.label+" ("+f.weight+"%) — "+val;
+      }).join("\n");
+
+      var tgReview="⚠️ <b>AI REVIEW NEEDED — "+result.total+"%</b>\n"
+        +"━━━━━━━━━━━━━━━━━━\n"
+        +"🎮 <b>Game:</b> "+order.game+"\n"
+        +"📦 <b>Package:</b> "+(order.currencyIcon||"")+" "+order.amount+" "+order.currency+"\n"
+        +"👤 <b>User ID:</b> "+order.userId+(order.serverId?" ("+order.serverId+")":"")+"\n"
+        +"📧 <b>Account:</b> "+(order.authUser||"guest")+"\n"
+        +"💰 <b>Price:</b> "+fmtP(order.price)+"\n"
+        +"💳 <b>Payment:</b> "+order.payment+"\n"
+        +"🔖 <b>Order ID:</b> #"+(order.txnId||order.fbId||"")+"\n"
+        +"📅 <b>Date:</b> "+fd(order.timestamp)+"\n"
+        +"━━━━━━━━━━━━━━━━━━\n"
+        +"📊 <b>AI Score: "+result.total+"%</b>\n\n"
+        +"<b>AI စစ်ဆေးချက် အသေးစိတ်:</b>\n"
+        +reviewFields+"\n"
+        +"━━━━━━━━━━━━━━━━━━\n"
+        +(extracted.transactionId?"🔢 TxID: "+extracted.transactionId+"\n":""  )
+        +(extracted.sender?"👆 Sender: "+extracted.sender+"\n":"")
+        +(extracted.paymentType?"📱 Payment Type: "+extracted.paymentType+"\n":"")
+        +"━━━━━━━━━━━━━━━━━━\n"
+        +"⚡ Admin ဘက်မှ စစ်ဆေးပြီး Confirm / Reject လုပ်ပေးပါ";
+      sendTgNotify(tgReview);
+      toast("Admin review needed ("+result.total+"%) — Telegram ပို့ပြီး","in");
+    } else {
+      // Below 50% — auto reject, lock, notify user with reason
+      if(order.status==="pending"){
+        var failedFields=result.fields.filter(function(f){return!f.match;});
+        var reasonLines=failedFields.map(function(f){
+          if(f.label==="Amount")return"❌ ငွေပမာဏ မတူညီပါ (Receipt: "+(extracted.amount||"မတွေ့")+", Order: "+order.price+" MMK)";
+          if(f.label==="Receiver")return"❌ လက်ခံသူအမည် မကိုက်ညီပါ (Receipt: "+(extracted.receiver||"မတွေ့")+")";
+          if(f.label==="Status")return"❌ Transaction status မအောင်မြင်ပါ ("+(extracted.status||"မတွေ့")+")";
+          if(f.label==="Date")return"❌ ငွေလွှဲ ရက်စွဲ မကိုက်ညီပါ";
+          return"❌ "+f.label+" မကိုက်ညီပါ";
+        });
+        var rejectReason="🤖 AI စစ်ဆေးချက် — Score: "+result.total+"%\n\n"
+          +"အောက်ပါအချက်များ မကိုက်ညီသောကြောင့် Reject ဖြစ်ပါသည်:\n"
+          +reasonLines.join("\n")
+          +"\n\n✅ ဘာလုပ်ရမလဲ:\nReceipt မှန်ကန်ကြောင်း သေချာပြီး Order အသစ် ပြန်တင်ပေးပါ။";
+
+        O[orderIdx].status="failed";
+        O[orderIdx].rejectReason=rejectReason;
+        O[orderIdx].autoLocked=true;
+        O[orderIdx].autoRejected=true;
+        if(fb&&order.fbId){
+          db.collection("orders").doc(order.fbId).update({
+            status:"failed",
+            rejectReason:rejectReason,
+            rejectedAt:new Date().toISOString(),
+            autoRejected:true,
+            autoLocked:true,
+            aiScore:result.total,
+            aiExtracted:extracted,
+            aiFlag:true
+          });
+          var uid=order.authUser||order.pcaId||"guest";
+          db.collection("notifications").add({
+            userId:uid,
+            type:"rejected",
+            title:"❌ Order Reject — AI စစ်ဆေးချက် မအောင်မြင် ("+result.total+"%)",
+            message:"🎮 Game: "+(order.game||"—")+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")+"\n💰 Amount: "+fmtP(order.price)+"\n\n"+rejectReason,
+            orderId:order.txnId||order.fbId||"",
+            aiScore:result.total,
+            read:false,
+            timestamp:new Date().toISOString()
+          });
+        }
+        var tgMsg="🤖 <b>AI AUTO REJECTED</b>\n\n"
+          +"🎮 <b>"+order.game+"</b>\n"
+          +"👤 User: "+(order.authUser||order.userId)+"\n"
+          +"💰 "+fmtP(order.price)+"\n"
+          +"📊 AI Score: <b>"+result.total+"%</b>\n"
+          +"🔖 #"+(order.txnId||"")+"\n\n"
+          +"❌ ကျရောက်သော အချက်:\n"+reasonLines.join("\n");
+        sendTgNotify(tgMsg);
+        toast("AI Auto-rejected ("+result.total+"% — 50% အောက်)","er");
+        rOrd();rDash();
+      }
     }
   }catch(err){
     var isQuota=err.message&&(err.message.indexOf("quota")>=0||err.message.indexOf("Quota")>=0||err.message.indexOf("429")>=0||err.message.indexOf("exhausted")>=0);
@@ -1516,14 +1720,14 @@ async function aiVerifyReceipt(orderIdx, receiptBase64){
 
 function renderAIResult(result,extracted,orderIdx,container){
   if(!container)return;
-  var lvl=result.total>=85?"high":result.total>=60?"mid":"low";
-  var lvlLabel=result.total>=85?"Verified":result.total>=60?"Review Needed":"Suspicious";
-  var lvlColor=result.total>=85?"var(--gn)":result.total>=60?"var(--yw)":"var(--rd)";
+  var lvl=result.total>=80?"high":result.total>=50?"mid":"low";
+  var lvlLabel=result.total>=80?"Verified":result.total>=50?"Review Needed":"Auto Rejected";
+  var lvlColor=result.total>=80?"var(--gn)":result.total>=50?"var(--yw)":"var(--rd)";
 
   var h='<div class="rcv-score '+lvl+'">'
     +'<div class="sc-ring">'+result.total+'%</div>'
     +'<div><div style="font-size:13px;font-weight:900;color:'+lvlColor+'">'+lvlLabel+'</div>'
-    +'<div style="font-size:9px;color:var(--tx3);margin-top:2px">'+(result.total>=85?"Auto-approved by AI":result.total>=60?"Needs admin review":"Possible fake receipt")+'</div></div>'
+    +'<div style="font-size:9px;color:var(--tx3);margin-top:2px">'+(result.total>=80?"✅ Auto-approved":result.total>=50?"⚠️ Telegram ပို့ပြီး — Admin စစ်ပါ":"❌ Auto-rejected — 50% အောက်")+'</div></div>'
     +'</div>';
 
   h+='<div style="background:var(--sf2);border-radius:10px;padding:10px;margin-bottom:8px">';
