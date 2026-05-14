@@ -330,15 +330,12 @@ if(typeof firebase!=='undefined'){try{firebase.initializeApp(FC);db=firebase.fir
 function togglePw(id,btn){var i=document.getElementById(id);if(i.type==="password"){i.type="text";btn.innerHTML='<svg viewBox="0 0 24 24" stroke-width="1.8" style="width:18px;height:18px;stroke:var(--ac);fill:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';}else{i.type="password";btn.innerHTML='<svg viewBox="0 0 24 24" stroke-width="1.8" style="width:18px;height:18px;stroke:var(--tx3);fill:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}}
 
 // Quick login buttons
-function quickLogin(name){document.getElementById("adEm").value=name;document.getElementById("adPw").value="PCA280823";adLogin();}
+function quickLogin(name){document.getElementById("adEm").value=name;document.getElementById("adPw").focus();}
 
 // Local admin credentials (Firebase Auth မလိုဘဲ login ဝင်နိုင်)
-var ADMINS={
-  "PCA28":   "PCA280823",
-  "Raycod28":"PCA280823",
-  "pca28":   "PCA280823",
-  "raycod28":"PCA280823"
-};
+var ADMINS={"PCA28":1,"Raycod28":1,"pca28":1,"raycod28":1};
+var _PW=atob("UENBMjgwODIz"); // obfuscated
+function _chkPw(pw){return pw===_PW;}
 var _localLoginUser=null; // local login ဖြစ်ကြောင်း မှတ်ထားတဲ့ flag
 function adLogin(){
   var raw=document.getElementById("adEm").value.trim();
@@ -348,7 +345,7 @@ function adLogin(){
 
   // ── Local check (ပထမဆုံး) ──────────────────────────
   if(ADMINS[raw]!==undefined){
-    if(ADMINS[raw]===pw){
+    if(ADMINS[raw]&&_chkPw(pw)){
       err.textContent="";
       _localLoginUser=raw; // local login username မှတ်ထား
       check2FA();
@@ -382,7 +379,7 @@ if(adAuth){
     }
   });
 }
-document.addEventListener("keydown",function(e){if(e.key==="Enter"){if(document.getElementById("adminAuth").style.display!=="none")adLogin();if(document.getElementById("twoFaScreen").style.display!=="none")verify2FA();}});
+document.addEventListener("keydown",function(e){if(e.key==="Enter"){var auth=document.getElementById("adminAuth");var tfa=document.getElementById("twoFaScreen");if(auth&&auth.offsetParent!==null&&auth.style.display!=="none")adLogin();if(tfa&&tfa.style.display==="flex")verify2FA();}});
 
 // 2FA
 var TOTP_SECRET="",twoFaEnabled=false;
@@ -1301,7 +1298,7 @@ function rpT(){
   h+='</div></div>';
   return h;
 }
-function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game:"",gameId:"",gameServer:"",gameRank:"",gallery:[]};document.getElementById("mTi").textContent=i>=0?"Edit Account":"Add Account";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Image</label><div class="img-up" onclick="uploadImg(&quot;prmImg&quot;,this)">'+ip+'</div><input type="hidden" id="prmImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Title</label><input id="prmT" value="'+p.t+'"/></div><div class="fg"><label>Description</label><textarea id="prmD">'+p.d+'</textarea></div><div class="fg"><label>Caption</label><input id="prmCap" value="'+(p.caption||"")+'" placeholder="Short caption text"/></div><div class="fg"><div class="rw"><div><label>Discount</label><input id="prmX" value="'+p.x+'"/></div><div><label>Expiry</label><input id="prmE" value="'+p.exp+'"/></div></div></div><div style="font-size:10px;font-weight:800;color:var(--ac);text-transform:uppercase;margin:8px 0 6px">Game Account Info</div><div class="fg"><label>Game</label><input id="prmGm" value="'+(p.game||"")+'" placeholder="e.g. Mobile Legends"/></div><div class="fg"><div class="rw"><div><label>Game ID</label><input id="prmGid" value="'+(p.gameId||"")+'"/></div><div><label>Server</label><input id="prmGsv" value="'+(p.gameServer||"")+'"/></div></div></div><div class="fg"><label>Rank</label><input id="prmGrk" value="'+(p.gameRank||"")+'" placeholder="e.g. Mythic Glory"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPrm('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPrm('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
+function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game:"",gameId:"",gameServer:"",gameRank:"",gallery:[]};document.getElementById("mTi").textContent=i>=0?"Edit Account":"Add Account";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Image</label><div class="img-up" onclick="uploadImg(&quot;prmImg&quot;,this)">'+ip+'</div><input type="hidden" id="prmImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Title</label><input id="prmT" value="'+p.t+'"/></div><div class="fg"><label>Description</label><textarea id="prmD">'+p.d+'</textarea></div><div class="fg"><label>Caption</label><input id="prmCap" value="'+(p.caption||"")+'" placeholder="Short caption text"/></div><div class="fg"><div class="rw"><div><label>Discount</label><input id="prmX" value="'+p.x+'"/></div><div><label>Expiry</label><input id="prmE" value="'+p.exp+'"/></div></div></div><div style="font-size:10px;font-weight:800;color:var(--ac);text-transform:uppercase;margin:8px 0 6px">Game Account Info</div><div class="fg"><label>Game</label><input id="prmGm" value="'+(p.game||"")+'" placeholder="e.g. Mobile Legends"/></div><div class="fg"><div class="rw"><div><label>Game ID</label><input id="prmGid" value="'+(p.gameId||"")+'"/></div><div><label>Server</label><input id="prmGsv" value="'+(p.gameServer||"")+'"/></div></div></div><div class="fg"><label>Rank</label><input id="prmGrk" value="'+(p.gameRank||"")+'" placeholder="e.g. Mythic Glory"/></div><div class="fg"><label>Gallery Images (URLs ကို တစ်ကြောင်းချင်း)</label><textarea id="prmGal" style="min-height:70px;font-family:var(--m);font-size:11px" placeholder="https://example.com/img1.jpg">'+(Array.isArray(p.gallery)?p.gallery.join("\n"):(p.gallery||""))+'</textarea></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPrm('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPrm('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPrm(i){var o={t:document.getElementById("prmT").value,d:document.getElementById("prmD").value,x:document.getElementById("prmX").value,exp:document.getElementById("prmE").value,img:document.getElementById("prmImg").value,caption:document.getElementById("prmCap").value,game:document.getElementById("prmGm").value,gameId:document.getElementById("prmGid").value,gameServer:document.getElementById("prmGsv").value,gameRank:document.getElementById("prmGrk").value,gallery:document.getElementById("prmGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)PRM[i]=o;else PRM.push(o);if(fb)db.collection("promos").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
 function dPrm(i){adWarn({title:"Delete Account?",msg:"Delete \""+PRM[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}});}
 function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&o.status==="success"}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
