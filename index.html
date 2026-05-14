@@ -1593,27 +1593,43 @@ h+='<div class="stc"><div class="stc-t" style="color:var(--pur)"><svg viewBox="0
   +'<div class="str" style="flex-direction:column;align-items:stretch">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
   +'<div class="stl">Groq API Key</div>'
-  +'<span id="aiKeyStatus" style="font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;'+(AI_KEY?'background:rgba(0,176,92,.1);color:var(--gn);border:1px solid rgba(0,176,92,.2)':'background:rgba(229,57,53,.08);color:var(--rd);border:1px solid rgba(229,57,53,.2)')+'">'+(AI_KEY?'✓ Key Loaded':'✗ Not Set')+'</span>'
+  +'<span id="aiKeyStatus" style="font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;'+(AI_KEY?'background:rgba(0,176,92,.1);color:var(--gn);border:1px solid rgba(0,176,92,.2)':'background:rgba(229,57,53,.08);color:var(--rd);border:1px solid rgba(229,57,53,.2)')+'">'+(AI_KEY?'Key Loaded':'Not Set')+'</span>'
   +'</div>'
   +'<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">console.groq.com မှ Free API key ယူပါ — Myanmar မှ block မခံ</div>'
   +'<div style="display:flex;gap:6px;align-items:center">'
   +'<div style="position:relative;flex:1"><input class="sti" type="password" id="aiKeyInp" value="'+AI_KEY+'" placeholder="gsk_..." style="width:100%;font-family:var(--m);padding-right:36px"/>'
-  +'<button onclick="(function(){var i=document.getElementById(\'aiKeyInp\');i.type=i.type===\'password\'?\'text\':\'password\';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:700">👁</button></div>'
+  +'<button onclick="(function(){var i=document.getElementById(\'aiKeyInp\');i.type=i.type===\'password\'?\'text\':\'password\';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:700">Show</button></div>'
   +'<button class="bt gn" onclick="saveAIKey()" style="white-space:nowrap">Save</button>'
   +'</div>'
   +'<div style="display:flex;gap:4px;margin-top:8px">'
-  +'<button class="bt bl" style="flex:1;justify-content:center;font-size:10px" onclick="testAIKey()">🧪 Test Key</button>'
-  +'<button class="bt" style="flex:1;justify-content:center;font-size:10px;color:var(--tx3)" onclick="(function(){document.getElementById(\'aiKeyInp\').value=\'\';AI_KEY=\'\';if(fb&&db)db.collection(\'config\').doc(\'ai\').set({groqKey:\'\',savedAt:new Date().toISOString()});document.getElementById(\'aiKeyStatus\').textContent=\'✗ Not Set\';document.getElementById(\'aiKeyStatus\').style.color=\'var(--rd)\';toast(\'Key cleared\',\'in\');})()">🗑 Clear</button>'
+  +'<button class="bt bl" style="flex:1;justify-content:center;font-size:10px" onclick="testAIKey()">Test Key</button>'
+  +'<button class="bt" style="flex:1;justify-content:center;font-size:10px;color:var(--tx3)" onclick="(function(){document.getElementById(\'aiKeyInp\').value=\'\';AI_KEY=\'\';if(fb&&db)db.collection(\'config\').doc(\'ai\').set({groqKey:\'\',savedAt:new Date().toISOString()},{merge:true});document.getElementById(\'aiKeyStatus\').textContent=\'Not Set\';document.getElementById(\'aiKeyStatus\').style.color=\'var(--rd)\';toast(\'Key cleared\',\'in\');})()">Clear</button>'
   +'</div>'
   +'</div>'
   +'<div class="str"><div><div class="stl">Confidence Threshold</div><div class="sts">85%+ auto-approve | 50-84% Admin review | <50% auto-reject</div></div><div style="display:flex;align-items:center;gap:6px"><input id="aiThreshInp" type="number" min="50" max="99" value="85" style="width:55px;padding:6px 8px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-family:var(--m);text-align:center;outline:none"/><span style="font-size:11px;font-weight:700;color:var(--tx3)">%</span></div></div>'
   +'<div class="str" style="flex-direction:column;align-items:stretch"><div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:6px">AI စစ်ဆေးပုံ Logic</div>'
   +'<div style="display:flex;flex-direction:column;gap:4px">'
-  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(0,176,92,.06);border:1px solid rgba(0,176,92,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--gn)">85%+</span><span style="font-size:10px;color:var(--tx2)">→ Auto Confirm ✅ (Receipt & Amount ကိုက်ညီ)</span></div>'
-  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(240,165,0,.06);border:1px solid rgba(240,165,0,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--yw)">50-84%</span><span style="font-size:10px;color:var(--tx2)">→ Admin Review ⚠️ (Force Confirm/Reject ရွေး)</span></div>'
-  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--rd)">&lt;50%</span><span style="font-size:10px;color:var(--tx2)">→ Auto Reject ❌ (User notification + Reason)</span></div>'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(0,176,92,.06);border:1px solid rgba(0,176,92,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--gn)">85%+</span><span style="font-size:10px;color:var(--tx2)">→ Auto Confirm (Receipt & Amount ကိုက်ညီ)</span></div>'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(240,165,0,.06);border:1px solid rgba(240,165,0,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--yw)">50-84%</span><span style="font-size:10px;color:var(--tx2)">→ Admin Review (Force Confirm/Reject ရွေး)</span></div>'
+  +'<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:rgba(229,57,53,.06);border:1px solid rgba(229,57,53,.15)"><span style="font-size:10px;min-width:30px;font-weight:900;color:var(--rd)">&lt;50%</span><span style="font-size:10px;color:var(--tx2)">→ Auto Reject (User notification + Reason)</span></div>'
   +'</div></div>'
   +'</div>';
+h+='<div class="stc"><div class="stc-t" style="color:var(--blu)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Store AI Chat Key</div>'
+  +'<div class="str" style="flex-direction:column;align-items:stretch">'
+  +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+  +'<div class="stl">Groq API Key</div>'
+  +'<span id="storeChatKeyStatus" style="font-size:9px;font-weight:800;padding:2px 8px;border-radius:6px;'+(window._storeChatKey?'background:rgba(0,102,255,.1);color:var(--blu);border:1px solid rgba(0,102,255,.2)':'background:rgba(229,57,53,.08);color:var(--rd);border:1px solid rgba(229,57,53,.2)')+'">'+(window._storeChatKey?'Set':'Not Set')+'</span>'
+  +'</div>'
+  +'<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">Store ထဲ AI Customer Chat အတွက် Key — Admin Panel မှ set လုပ်ပြီး Store သို့ sync ဖြစ်မည်</div>'
+  +'<div style="display:flex;gap:6px;align-items:center">'
+  +'<div style="position:relative;flex:1"><input class="sti" type="password" id="storeChatKeyInp" value="'+(window._storeChatKey||"")+'" placeholder="gsk_..." style="width:100%;font-family:var(--m);padding-right:36px"/>'
+  +'<button onclick="(function(){var i=document.getElementById(\'storeChatKeyInp\');i.type=i.type===\'password\'?\'text\':\'password\';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:700">Show</button></div>'
+  +'<button class="bt gn" onclick="saveStoreChatKey()" style="white-space:nowrap">Save</button>'
+  +'</div>'
+  +'<div style="display:flex;gap:4px;margin-top:8px">'
+  +'<button class="bt" style="flex:1;justify-content:center;font-size:10px;color:var(--tx3)" onclick="(function(){document.getElementById(\'storeChatKeyInp\').value=\'\';window._storeChatKey=\'\';if(fb&&db)db.collection(\'config\').doc(\'ai\').set({storeChatKey:\'\'},{ merge:true });var s=document.getElementById(\'storeChatKeyStatus\');if(s){s.textContent=\'Not Set\';s.style.color=\'var(--rd)\';}toast(\'Store Chat Key cleared\',\'in\');})()">Clear</button>'
+  +'</div>'
+  +'</div></div>';
 h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div class="stl">'+FC.projectId+'</div><span class="bg '+(fb?"su":"fa")+'" style="font-size:10px">'+(fb?"Online":"Offline")+'</span></div></div>';
 h+='<div class="stc"><div class="stl" style="color:var(--tx3)">PCA Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
 function setup2FA(){pendingSecret=genSecret();document.getElementById("tfaSetup").style.display="block";document.getElementById("tfaSecret").textContent=pendingSecret;var uri="otpauth://totp/PcaAdmin:"+(adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin")+"?secret="+pendingSecret+"&issuer=PcaAdmin&digits=6&period=30";document.getElementById("tfaQR").src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data="+encodeURIComponent(uri);}
@@ -1642,10 +1658,15 @@ var AI_KEY=""; // Loaded from Firebase config/ai on init
 function loadAIKey(cb){
   if(!fb||!db){if(cb)cb();return;}
   db.collection("config").doc("ai").get().then(function(d){
-    if(d.exists&&d.data().groqKey){
-      AI_KEY=d.data().groqKey;
-      var inp=document.getElementById("aiKeyInp");
-      if(inp)inp.value=AI_KEY;
+    if(d.exists){
+      if(d.data().groqKey){
+        AI_KEY=d.data().groqKey;
+        var inp=document.getElementById("aiKeyInp");
+        if(inp)inp.value=AI_KEY;
+      }
+      if(d.data().storeChatKey){
+        window._storeChatKey=d.data().storeChatKey;
+      }
     }
     if(cb)cb();
   }).catch(function(){if(cb)cb();});
@@ -1657,10 +1678,25 @@ function saveAIKey(){
   AI_KEY=v;
   // Status indicator update
   var st=document.getElementById("aiKeyStatus");
-  if(st){st.textContent="✓ Key Loaded";st.style.background="rgba(0,176,92,.1)";st.style.color="var(--gn)";st.style.border="1px solid rgba(0,176,92,.2)";}
+  if(st){st.textContent="Key Loaded";st.style.background="rgba(0,176,92,.1)";st.style.color="var(--gn)";st.style.border="1px solid rgba(0,176,92,.2)";}
   if(fb&&db){
-    db.collection("config").doc("ai").set({groqKey:v,savedAt:new Date().toISOString()})
+    db.collection("config").doc("ai").set({groqKey:v,savedAt:new Date().toISOString()},{merge:true})
       .then(function(){toast("AI Key saved ✓ (Firebase ထဲ သိမ်းပြီး)","ok");})
+      .catch(function(){toast("Key saved locally only","in");});
+  } else {
+    toast("Key saved (offline)","in");
+  }
+}
+// ─── Store Chat Key: Firebase ထဲ Save ────────────────────────────────
+function saveStoreChatKey(){
+  var v=document.getElementById("storeChatKeyInp").value.trim();
+  if(!v){toast("Key မထည့်ရသေးပါ","er");return;}
+  window._storeChatKey=v;
+  var st=document.getElementById("storeChatKeyStatus");
+  if(st){st.textContent="Set";st.style.background="rgba(0,102,255,.1)";st.style.color="var(--blu)";st.style.border="1px solid rgba(0,102,255,.2)";}
+  if(fb&&db){
+    db.collection("config").doc("ai").set({storeChatKey:v,savedAt:new Date().toISOString()},{merge:true})
+      .then(function(){toast("Store Chat Key saved ✓ (Firebase ထဲ သိမ်းပြီး)","ok");})
       .catch(function(){toast("Key saved locally only","in");});
   } else {
     toast("Key saved (offline)","in");
