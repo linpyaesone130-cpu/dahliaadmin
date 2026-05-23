@@ -847,7 +847,7 @@ async function _aiConfirmCheck(i){
   if(!order)return;
   var payAcc=P.find(function(p){return p.n===order.payment;});
   var payHd=payAcc?payAcc.hd:"";
-  var prompt='You are a Myanmar payment receipt OCR extractor. Analyze this payment receipt screenshot carefully.\n\nExtract ONLY these fields in JSON format:\n{\n  "amount": "numeric amount in MMK (numbers only, no commas)",\n  "receiver": "receiver/recipient name exactly as shown",\n  "sender": "sender name if visible",\n  "date": "transaction date as shown",\n  "time": "transaction time if visible",\n  "paymentType": "KBZPay or Wave Pay or AYA Pay or CB Pay or Unknown",\n  "transactionId": "transaction ID/reference number if visible",\n  "status": "Success or Completed or Failed or Unknown"\n}\n\nIMPORTANT:\n- For KBZPay receipts: look for "လက်ခံသူ" (receiver) and "ငွေပမာဏ" (amount)\n- For Wave Pay: look for "Receiver" and "Amount"\n- If a field is not visible, use null\n- Return ONLY valid JSON, no other text';
+  var prompt='Extract payment receipt data. Return ONLY this JSON (no markdown):\n{"amount":"MMK number only","receiver":"recipient name","transactionId":"Txn/Ref/Order ID number","date":"DD/MM/YYYY or as shown","paymentType":"KBZPay|WavePay|AYAPay|CBPay|Unknown","status":"Success|Completed|Failed|Unknown"}\nKBZPay: look for ငွေပမာဏ(amount) လက်ခံသူ(receiver) ကိုးကားနံပါတ်(txnId). WavePay: Amount/Receiver/Reference. Return null for missing fields.';
   try{
     var imgData=order.receiptUrl.split(",")[1]||order.receiptUrl;
     var raw=await geminiCall([{inline_data:{mime_type:"image/jpeg",data:imgData}},{text:prompt}],600);
@@ -861,7 +861,7 @@ async function _aiConfirmCheck(i){
     if(result.total>=85){
       if(fb&&order.fbId)db.collection("orders").doc(order.fbId).update({aiVerified:true,aiScore:result.total,aiExtracted:extracted,aiVerifiedAt:new Date().toISOString()});
       toast("AI စစ်ဆေး ✓ "+result.total+"% — Confirming...","ok");
-      _doConfirm(i);
+      _execConfirm(i,-1);
       return;
     }
 
@@ -881,7 +881,7 @@ async function _aiConfirmCheck(i){
         +"<div style='font-size:9px;color:var(--tx3);margin-top:6px'>TxID: "+(extracted.transactionId||"—")+" • "+extracted.paymentType+"</div>"
         +"</div>"
         +"<div style='display:flex;gap:6px;margin-top:6px'>"
-        +"<button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_doConfirm("+i+")\">✅ Force Confirm</button>"
+        +"<button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_execConfirm("+i+",-1)\">✅ Force Confirm</button>"
         +"<button class='mb dl' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_promptRejectReason("+i+")\">❌ Reject</button>"
         +"</div>";
       // Inline modal ဖြင့် ပြ
@@ -907,7 +907,7 @@ async function _aiConfirmCheck(i){
     _doReject(i, autoReason, {aiScore:result.total,aiExtracted:extracted,autoRejected:true,autoLocked:true});
   }catch(err){
     toast("AI စစ်မရပါ — Manual Confirm?","in");
-    _showAIReviewModal("AI Error","<div style='padding:10px;font-size:12px;color:var(--rd)'>AI စစ်ဆေးမရပါ: "+err.message+"<br><br><div style='display:flex;gap:6px;margin-top:8px'><button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_doConfirm("+i+")\">Manual Confirm</button><button class='mb cn' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none'\">Cancel</button></div></div>");
+    _showAIReviewModal("AI Error","<div style='padding:10px;font-size:12px;color:var(--rd)'>AI စစ်ဆေးမရပါ: "+err.message+"<br><br><div style='display:flex;gap:6px;margin-top:8px'><button class='mb sv' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none';_execConfirm("+i+",-1)\">Manual Confirm</button><button class='mb cn' style='font-size:11px;padding:10px;flex:1' onclick=\"document.getElementById('aiReviewMo').style.display='none'\">Cancel</button></div></div>");
   }
 }
 
@@ -928,42 +928,122 @@ function _showAIReviewModal(title, bodyHtml){
 }
 
 // ─── Reject reason prompt ─────────────────────────────────────────────
+var _REJECT_REASONS=[
+  {label:"ငွေပမာဏ မကိုက်ညီပါ",detail:"❌ ငွေပမာဏ မကိုက်ညီပါ — Order တွင် သတ်မှတ်ထားသည့် ပမာဏနှင့် Receipt ထဲ ပမာဏ မတူပါ။"},
+  {label:"Receipt မပါ / မရှင်းပါ",detail:"❌ ငွေလွှဲပြေစာ (Receipt) screenshot မပါသောကြောင့် သို့မဟုတ် မရှင်းမလင်းသောကြောင့် Verify လုပ်၍မရပါ။"},
+  {label:"လက်ခံသူ မကိုက်ညီပါ",detail:"❌ ငွေလွှဲ လက်ခံသူ အမည် မကိုက်ညီပါ — PCA Store ၏ ငွေပေးချေသည့် Account သို့ မလွှဲပါ။"},
+  {label:"ရက်စွဲ မကိုက်ညီပါ",detail:"❌ ငွေလွှဲ ရက်စွဲ မကိုက်ညီပါ — ယနေ့ ငွေလွှဲပြေစာ ဖြစ်ရမည်။ ဟောင်းသော receipt မသုံးပါနှင့်။"},
+  {label:"Duplicate Receipt",detail:"❌ ဤ Receipt ကို အကြိမ်ကြိမ် အသုံးပြုနေသောကြောင့် Reject ဖြစ်ပါသည်။"},
+  {label:"ငွေပေးချေမှုနည်းလမ်း မမှန်ပါ",detail:"❌ Order တွင် ရွေးချယ်ထားသော ငွေပေးချေမှုနည်းလမ်းနှင့် Receipt မကိုက်ညီပါ။"},
+  {label:"Transaction ID မပါပါ",detail:"❌ Receipt ထဲတွင် Transaction ID မပါသောကြောင့် စစ်ဆေးမရပါ — Transaction number ပေါ်မြင်နိုင်သော screenshot ပြန်တင်ပါ။"}
+];
+
 function _promptRejectReason(i){
   var order=O[i];
-  adPrompt({
-    title:"Reject အကြောင်းပြချက်",
-    msg:"Order #"+(order.txnId||order.fbId||"")+" — User ကို ပို့မည့် Reject reason ထည့်ပါ",
-    placeholder:"e.g. ငွေပမာဏ မကိုက်ညီပါ...",
-    okLabel:"Reject & Notify",
-    type:"red",
-    icon:"warn",
-    onOk:function(reason){
-      if(!reason||reason.length<3){toast("အကြောင်းပြချက် ထည့်ပါ","er");return;}
-      var fullReason="❌ Admin Reject အကြောင်းပြချက်:\n"+reason
-        +"\n\n📦 Order: "+(order.txnId||order.fbId||"")
-        +"\n🎮 Game: "+order.game
-        +"\n💰 Amount: "+fmtP(order.price)
-        +"\n\n✅ ဘာလုပ်ရမလဲ:\nသတ်မှတ်ချက်နှင့် မကိုက်ညီသောကြောင့် Order ကို ပြန်တင်ပေးပါ သို့မဟုတ် Support ကို ဆက်သွယ်ပါ။";
-      _doReject(i, fullReason);
-    }
-  });
+  var existing=document.getElementById("rejectReasonMo");
+  if(existing)document.body.removeChild(existing);
+  var mo=document.createElement("div");
+  mo.id="rejectReasonMo";
+  mo.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:flex-end;justify-content:center";
+  var reasonOpts=_REJECT_REASONS.map(function(r,ri){
+    return'<div onclick="_selectRejectReason('+ri+')" id="rejOpt'+ri+'" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);cursor:pointer;margin-bottom:5px;transition:all .15s">'
+      +'<div style="font-size:12px;font-weight:800;color:var(--rd)">'+r.label+'</div>'
+      +'<div style="font-size:10px;color:var(--tx3);margin-top:2px;line-height:1.4">'+r.detail+'</div></div>';
+  }).join("");
+  mo.innerHTML='<div style="background:var(--sf);border-radius:22px 22px 0 0;padding:16px 16px 28px;max-width:430px;width:100%;max-height:85vh;overflow-y:auto;border-top:1px solid var(--bd2)">'
+    +'<div style="width:40px;height:4px;border-radius:4px;background:var(--bd2);margin:0 auto 14px"></div>'
+    +'<div style="font-size:13px;font-weight:900;color:var(--rd);margin-bottom:4px;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--rd);fill:none;stroke-width:2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject အကြောင်းပြချက် ရွေးပါ</div>'
+    +'<div style="font-size:10px;color:var(--tx3);margin-bottom:12px">User ၏ Inbox သို့ automatic ပို့မည်</div>'
+    +reasonOpts
+    +'<div style="margin-top:8px"><div style="font-size:9px;color:var(--tx3);font-weight:700;margin-bottom:5px">သို့မဟုတ် Custom reason ထည့်ပါ</div>'
+    +'<textarea id="rejectCustomTxt" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;min-height:60px;resize:vertical" placeholder="Custom reason ရိုက်ထည့်ပါ..."></textarea></div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button id="rejectSendBtn" onclick="_sendRejectWithReason('+i+')" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--rd);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)">❌ Reject & Notify</button>'
+    +'<button onclick="document.body.removeChild(document.getElementById(\'rejectReasonMo\'))" style="padding:11px 14px;border-radius:10px;border:1.5px solid var(--bd);background:none;color:var(--tx2);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f)">Cancel</button>'
+    +'</div></div>';
+  mo.addEventListener("click",function(e){if(e.target===mo){document.body.removeChild(mo);}});
+  document.body.appendChild(mo);
+  window._selectedRejectIdx=-1;
+}
+
+function _selectRejectReason(ri){
+  window._selectedRejectIdx=ri;
+  // Highlight selected
+  for(var k=0;k<_REJECT_REASONS.length;k++){
+    var el=document.getElementById("rejOpt"+k);
+    if(el){el.style.borderColor=k===ri?"var(--rd)":"var(--bd)";el.style.background=k===ri?"rgba(229,57,53,.06)":"var(--sf2)";}
+  }
+  // Fill textarea with selected reason detail
+  var ta=document.getElementById("rejectCustomTxt");
+  if(ta)ta.value=_REJECT_REASONS[ri].detail;
+}
+
+function _sendRejectWithReason(i){
+  var ta=document.getElementById("rejectCustomTxt");
+  var reason=ta?ta.value.trim():"";
+  if(!reason){toast("အကြောင်းပြချက် ရွေးပါ သို့မဟုတ် ရိုက်ထည့်ပါ","er");return;}
+  var order=O[i];
+  var fullReason=reason
+    +"\n\n📦 Transaction ID: "+(order.txnId||order.fbId||"")
+    +"\n🎮 Game: "+order.game
+    +"\n💰 Amount: "+fmtP(order.price)
+    +"\n\n✅ ဘာလုပ်ရမလဲ:\nမှန်ကန်သော ငွေလွှဲ Receipt ဖြင့် Order အသစ် ပြန်တင်ပေးပါ (သို့) Support ကို ဆက်သွယ်ပါ။";
+  var mo=document.getElementById("rejectReasonMo");if(mo)document.body.removeChild(mo);
+  _doReject(i,fullReason);
 }
 
 // ─── Execute confirm ──────────────────────────────────────────────────
+var _THANK_YOU_MSGS=[
+  "✅ Order confirm ဖြစ်ပါပြီ! ကျေးဇူးတင်ပါသည် 🙏",
+  "🎉 ငွေလွှဲပြေစာ စစ်ဆေးပြီးပါပြီ — Diamond ထည့်သွင်းပေးနေပါသည်! ကျေးဇူးတင်ပါသည်",
+  "💎 Top-up ပြုလုပ်ပြီးပါပြီ! PCA Store ကို ယုံကြည်အားပေးသည့်အတွက် ကျေးဇူးတင်ပါသည် ❤️",
+  "⚡ Order ကို လိုက်ကြော်ထည့်ပေးလိုက်ပါပြီ! နောက်လည်း ဝင်ရောက်ဖြည့်ပေးပါ 😊",
+  "🏆 Diamond ထည့်ပြီးပါပြီ! ကစားပွဲမှာ ကောင်းကောင်းကစားပါ ✨",
+  "🎮 Top-up အောင်မြင်ပြီ! ကျေးဇူးတင်ပါသည် — နောက်ထပ်ကူညီနိုင်ရင် ပြန်ဝင်လာပါ 🤝",
+  "✨ Order process ပြုလုပ်ပြီးပါပြီ! PCA Store ကို ထောက်ပံ့ပေးသည့်အတွက် အများကြီးကျေးဇူးတင်ပါသည် 💙"
+];
+
 function _doConfirm(i){
   var order=O[i];
+  // Show thank-you message selector
+  var existing=document.getElementById("thankYouMoSel");
+  if(existing)document.body.removeChild(existing);
+  var mo=document.createElement("div");
+  mo.id="thankYouMoSel";
+  mo.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:flex-end;justify-content:center";
+  var msgOpts=_THANK_YOU_MSGS.map(function(m,mi){
+    return'<div onclick="_execConfirm('+i+','+mi+')" style="padding:10px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);cursor:pointer;font-size:12px;color:var(--tx);line-height:1.5;margin-bottom:6px;transition:border-color .15s" onmouseover="this.style.borderColor=\'var(--gn)\'" onmouseout="this.style.borderColor=\'var(--bd)\'">'
+      +'<span style="font-size:9px;color:var(--tx3);font-weight:700;display:block;margin-bottom:3px">Option '+(mi+1)+'</span>'+m+'</div>';
+  }).join("");
+  mo.innerHTML='<div style="background:var(--sf);border-radius:22px 22px 0 0;padding:16px 16px 28px;max-width:430px;width:100%;max-height:80vh;overflow-y:auto;border-top:1px solid var(--bd2)">'
+    +'<div style="width:40px;height:4px;border-radius:4px;background:var(--bd2);margin:0 auto 14px"></div>'
+    +'<div style="font-size:13px;font-weight:900;color:var(--gn);margin-bottom:4px;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--gn);fill:none;stroke-width:2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Order Confirm — ကျေးဇူးတင်မှု Message ရွေးပါ</div>'
+    +'<div style="font-size:10px;color:var(--tx3);margin-bottom:12px">User ထံ notification ဖြင့် ပို့မည်</div>'
+    +msgOpts
+    +'<div style="display:flex;gap:8px;margin-top:8px">'
+    +'<button onclick="_execConfirm('+i+',-1)" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--gn);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f)">✓ Default Message ဖြင့် Confirm</button>'
+    +'<button onclick="document.body.removeChild(document.getElementById(\'thankYouMoSel\'))" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--bd);background:none;color:var(--tx2);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f)">Cancel</button>'
+    +'</div></div>';
+  mo.addEventListener("click",function(e){if(e.target===mo){document.body.removeChild(mo);}});
+  document.body.appendChild(mo);
+}
+
+function _execConfirm(i, msgIdx){
+  // Remove thank-you selector modal
+  var mo=document.getElementById("thankYouMoSel");if(mo)document.body.removeChild(mo);
+  var order=O[i];
+  var thankMsg=msgIdx>=0&&_THANK_YOU_MSGS[msgIdx]?_THANK_YOU_MSGS[msgIdx]:"✅ Order confirm ဖြစ်ပါပြီ! ကျေးဇူးတင်ပါသည် 🙏";
   O[i].status="confirmed";
   if(fb&&order.fbId){
     db.collection("orders").doc(order.fbId).update({status:"confirmed",confirmedAt:new Date().toISOString()});
-    // Notification — authUser (email) ရှိတဲ့ User ကိုသာ ပို့
     var uid=order.authUser&&order.authUser!=="guest"?order.authUser:null;
     if(uid){
       db.collection("notifications").add({
         userId:uid,type:"approved",
-        title:"✅ Order Confirmed!",
+        title:"✅ Order Confirmed — "+order.game,
         message:"🎮 Game: "+order.game+"\n📦 Package: "+(order.currencyIcon||"")+order.amount+" "+order.currency
-          +"\n💰 Amount: "+fmtP(order.price)+"\n🔖 Order ID: "+(order.txnId||order.fbId||"")
-          +"\n\n⚡ Item များ မကြာမီ ထည့်သွင်းပေးမည်။ ကျေးဇူးတင်ပါသည်!",
+          +"\n💰 Amount: "+fmtP(order.price)+"\n🔖 Transaction ID: "+(order.txnId||order.fbId||"")
+          +"\n\n"+thankMsg,
         orderId:order.txnId||"",read:false,timestamp:new Date().toISOString()
       });
     }
@@ -972,10 +1052,9 @@ function _doConfirm(i){
     +"🎮 <b>"+order.game+"</b>\n"
     +"📦 "+(order.currencyIcon||"")+" "+order.amount+" "+order.currency+"\n"
     +"👤 User: "+order.userId+(order.serverId?" ("+order.serverId+")":"")+"\n"
-    +"💰 "+fmtP(order.price)+"\n💳 "+order.payment+"\n🔖 #"+(order.txnId||"")+"\n\n⚡ Delivered!";
+    +"💰 "+fmtP(order.price)+"\n💳 "+order.payment+"\n🔖 #"+(order.txnId||"")+"\n\n"+thankMsg;
   sendTgNotify(tgMsg);
   toast("Order Confirmed ✓","ok");
-  // Giveaway milestone
   var userEmail=order.authUser;
   if(userEmail&&userEmail!=="__guest__"){
     var cc=O.filter(function(o){return(o.status==="confirmed"||o.status==="success")&&o.authUser===userEmail;}).length;
@@ -1037,7 +1116,7 @@ function vO(i){
     ?'<div style="margin-bottom:10px;padding:10px 12px;background:rgba(229,57,53,.08);border-radius:12px;border:1.5px solid rgba(229,57,53,.2);display:flex;gap:8px;align-items:flex-start"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--rd);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><div style="font-size:11px;font-weight:800;color:var(--rd);margin-bottom:2px">Reject အကြောင်းပြချက်</div><div style="font-size:11px;color:var(--tx2);line-height:1.5">'+o.rejectReason+'</div>'+(o.autoRejected?'<div style="font-size:9px;color:var(--tx3);margin-top:3px;font-weight:700">⚡ Auto-rejected by system</div>':"")+'</div></div>'
     :"";
   var infoRows=[
-    {l:"Order ID",v:o.txnId||"-"},
+    {l:"Transaction ID",v:'<span style="font-family:var(--m);color:var(--ac);font-weight:800">'+(o.txnId||"-")+'</span>'+(o.aiExtracted&&o.aiExtracted.transactionId?'<br><span style="font-size:9px;color:var(--tx3)">Receipt TxID: <b style="color:var(--pur)">'+o.aiExtracted.transactionId+'</b></span>':"")},
     {l:"Game",v:o.game},
     {l:"Package",v:(o.currencyIcon||"")+" "+o.amount},
     {l:"User ID",v:o.userId+(o.serverId?" (Server: "+o.serverId+")":"")},
@@ -1084,7 +1163,7 @@ function vO(i){
       +'<div class="fg"><label>Status</label><select id="xOS"><option'+(o.status==="pending"?" selected":"")+'>pending</option><option'+(o.status==="confirmed"?" selected":"")+' value="confirmed">confirmed</option><option'+(o.status==="failed"?" selected":"")+'>failed</option></select></div>'
       +'<div class="fg"><div class="rw"><div><label>Game User ID</label><input id="xOU" value="'+o.userId+'"/></div><div><label>Server</label><input id="xOSv" value="'+(o.serverId||"")+'"/></div></div></div>'
       +rcp
-      +[{l:"Order",v:o.txnId},{l:"Game",v:o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("")
+      +[{l:"Transaction ID",v:'<span style="font-family:var(--m);color:var(--ac);font-weight:800">'+(o.txnId||"-")+'</span>'+(o.aiExtracted&&o.aiExtracted.transactionId?'<br><span style="font-size:9px;color:var(--tx3)">Receipt TxID: <b style="color:var(--pur)">'+o.aiExtracted.transactionId+'</b></span>':"")},{l:"Game",v:o.game},{l:"Package",v:(o.currencyIcon||"")+" "+o.amount},{l:"Payment",v:o.payment},{l:"Price",v:fmtP(o.price)},{l:"Date",v:fd(o.timestamp)}].map(function(r){return'<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';}).join("")
       // AI Verify section
       +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)">'
       +'<div style="font-size:9px;font-weight:800;color:var(--pur);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:5px">'
@@ -1851,7 +1930,7 @@ async function geminiCall(parts,maxTokens,retryCount){
   var r=await fetch("https://api.groq.com/openai/v1/chat/completions",{
     method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+AI_KEY},
-    body:JSON.stringify({model:model,messages:[{role:"user",content:msgContent}],max_tokens:maxTokens||600,temperature:0.1})
+    body:JSON.stringify({model:model,messages:[{role:"user",content:msgContent}],max_tokens:maxTokens||200,temperature:0})
   });
   if(!r.ok){
     var e=await r.json();
@@ -1859,7 +1938,7 @@ async function geminiCall(parts,maxTokens,retryCount){
     var msg=(e.error&&e.error.message)||"API error "+code;
     if(code===429||code===503||code===404||msg.indexOf("model")>=0){
       _groqBadModels[model]=true;_groqModel=null;
-      if(code===429)await new Promise(function(res){setTimeout(res,2000);});
+      if(code===429)await new Promise(function(res){setTimeout(res,1500);});
       return geminiCall(parts,maxTokens,retryCount+1);
     }
     throw new Error(msg);
@@ -1973,7 +2052,7 @@ async function aiVerifyReceipt(orderIdx, receiptBase64){
   var loadEl=document.getElementById("aiVerifyResult");
   if(loadEl){loadEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba(0,102,255,.05);border-radius:10px;border:1px solid var(--bd)"><div class="ai-spin"></div><span style="font-size:11px;font-weight:700;color:var(--tx2)">AI is analyzing receipt...</span></div>';}
 
-  var prompt='You are a Myanmar payment receipt OCR extractor. Analyze this payment receipt screenshot carefully.\n\nExtract ONLY these fields in JSON format:\n{\n  "amount": "numeric amount in MMK (numbers only, no commas)",\n  "receiver": "receiver/recipient name exactly as shown",\n  "sender": "sender name if visible",\n  "date": "transaction date as shown",\n  "time": "transaction time if visible",\n  "paymentType": "KBZPay or Wave Pay or AYA Pay or CB Pay or Unknown",\n  "transactionId": "transaction ID/reference number if visible",\n  "status": "Success or Completed or Failed or Unknown"\n}\n\nIMPORTANT:\n- For KBZPay receipts: look for "လက်ခံသူ" (receiver) and "ငွေပမာဏ" (amount)\n- For Wave Pay: look for "Receiver" and "Amount"\n- For AYA Pay: look for recipient name and transfer amount\n- If a field is not visible, use null\n- Return ONLY valid JSON, no other text';
+  var prompt='Extract payment receipt data. Return ONLY this JSON (no markdown):\n{"amount":"MMK number only","receiver":"recipient name","transactionId":"Txn/Ref/Order ID number","date":"DD/MM/YYYY or as shown","paymentType":"KBZPay|WavePay|AYAPay|CBPay|Unknown","status":"Success|Completed|Failed|Unknown"}\nKBZPay: look for ငွေပမာဏ(amount) လက်ခံသူ(receiver) ကိုးကားနံပါတ်(txnId). WavePay: Amount/Receiver/Reference. Return null for missing fields.';
 
   try{
     var imgData=receiptBase64.split(",")[1]||receiptBase64;
@@ -2095,7 +2174,11 @@ function renderAIResult(result,extracted,orderIdx,container){
   h+='</div>';
 
   if(extracted.transactionId){
-    h+='<div style="font-size:9px;color:var(--tx3);margin-bottom:6px">TxID: <span style="font-family:var(--m);color:var(--ac)">'+extracted.transactionId+'</span></div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(123,104,238,.08);border:1px solid rgba(123,104,238,.2);border-radius:8px;margin-bottom:6px">'
+      +'<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:var(--pur);fill:none;stroke-width:2;flex-shrink:0"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'
+      +'<div><div style="font-size:8px;color:var(--pur);font-weight:800;text-transform:uppercase;letter-spacing:.3px">Receipt Transaction ID</div>'
+      +'<div style="font-size:12px;font-weight:900;font-family:var(--m);color:var(--tx)">'+extracted.transactionId+'</div></div>'
+      +'</div>';
   }
 
   // Action buttons
