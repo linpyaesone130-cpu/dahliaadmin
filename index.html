@@ -2374,7 +2374,16 @@ function fetchAll(cb){
   var done=0,need=6;
   function tick(){if(++done===need&&cb)cb();}
   db.collection("config").doc("store").get().then(function(d){if(d.exists){Object.assign(CFG,d.data());if(CFG.logoImg){var lm=document.querySelector(".logo-mark");if(lm)lm.innerHTML='<img src="'+CFG.logoImg+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';}}tick();}).catch(tick);
-  fbGet("games",   function(a){G=a;tick();});
+  fbGet("games", function(a){
+    // Sort by gameOrder from config/store (set by manage.html on publish)
+    db.collection("config").doc("store").get().then(function(cfg){
+      var order=(cfg.exists&&cfg.data().gameOrder)||[];
+      if(order.length>0){
+        a.sort(function(x,y){var xi=order.indexOf(x.n),yi=order.indexOf(y.n);if(xi<0)xi=9999;if(yi<0)yi=9999;return xi-yi;});
+      }
+      G=a;tick();
+    }).catch(function(){G=a;tick();});
+  });
   fbGet("payments",function(a){P=a;tick();});
   fbGet("events",  function(a){EVT=a;tick();});
   fbGet("promos",  function(a){PRM=a;tick();});
