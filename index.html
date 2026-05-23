@@ -955,15 +955,18 @@ function _doConfirm(i){
   O[i].status="confirmed";
   if(fb&&order.fbId){
     db.collection("orders").doc(order.fbId).update({status:"confirmed",confirmedAt:new Date().toISOString()});
-    var uid=order.authUser||"guest";
-    db.collection("notifications").add({
-      userId:uid,type:"approved",
-      title:"✅ Order Confirmed!",
-      message:"🎮 Game: "+order.game+"\n📦 Package: "+(order.currencyIcon||"")+order.amount+" "+order.currency
-        +"\n💰 Amount: "+fmtP(order.price)+"\n🔖 Order ID: "+(order.txnId||order.fbId||"")
-        +"\n\n⚡ Item များ မကြာမီ ထည့်သွင်းပေးမည်။ ကျေးဇူးတင်ပါသည်!",
-      orderId:order.txnId||"",read:false,timestamp:new Date().toISOString()
-    });
+    // Notification — authUser (email) ရှိတဲ့ User ကိုသာ ပို့
+    var uid=order.authUser&&order.authUser!=="guest"?order.authUser:null;
+    if(uid){
+      db.collection("notifications").add({
+        userId:uid,type:"approved",
+        title:"✅ Order Confirmed!",
+        message:"🎮 Game: "+order.game+"\n📦 Package: "+(order.currencyIcon||"")+order.amount+" "+order.currency
+          +"\n💰 Amount: "+fmtP(order.price)+"\n🔖 Order ID: "+(order.txnId||order.fbId||"")
+          +"\n\n⚡ Item များ မကြာမီ ထည့်သွင်းပေးမည်။ ကျေးဇူးတင်ပါသည်!",
+        orderId:order.txnId||"",read:false,timestamp:new Date().toISOString()
+      });
+    }
   }
   var tgMsg="<b>✅ ORDER CONFIRMED</b>\n\n"
     +"🎮 <b>"+order.game+"</b>\n"
@@ -991,23 +994,25 @@ function _doReject(i, rejectReason, extra){
   if(extra)Object.assign(fireUpdate,extra);
   if(fb&&order.fbId){
     db.collection("orders").doc(order.fbId).update(fireUpdate);
-    var uid=order.authUser||order.pcaId||"guest";
-    // User notification — detailed breakdown
-    var notifTitle=(extra&&extra.autoRejected)
-      ?"❌ Order Auto-Reject — AI စစ်ဆေးချက် မအောင်မြင်"
-      :"❌ Order Reject လုပ်ခြင်း";
-    db.collection("notifications").add({
-      userId:uid,
-      type:"rejected",
-      title:notifTitle,
-      message:"🎮 Game: "+order.game+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")
-        +"\n💰 Amount: "+fmtP(order.price)+"\n💳 Payment: "+(order.payment||"—")
-        +"\n\n"+rejectReason,
-      orderId:order.txnId||order.fbId||"",
-      aiScore:extra&&extra.aiScore!==undefined?extra.aiScore:undefined,
-      read:false,
-      timestamp:new Date().toISOString()
-    });
+    // Notification — authUser (email) ရှိတဲ့ User ကိုသာ ပို့ (guest skip)
+    var uid=order.authUser&&order.authUser!=="guest"?order.authUser:null;
+    if(uid){
+      var notifTitle=(extra&&extra.autoRejected)
+        ?"❌ Order Auto-Reject — AI စစ်ဆေးချက် မအောင်မြင်"
+        :"❌ Order Reject လုပ်ခြင်း";
+      db.collection("notifications").add({
+        userId:uid,
+        type:"rejected",
+        title:notifTitle,
+        message:"🎮 Game: "+order.game+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")
+          +"\n💰 Amount: "+fmtP(order.price)+"\n💳 Payment: "+(order.payment||"—")
+          +"\n\n"+rejectReason,
+        orderId:order.txnId||order.fbId||"",
+        aiScore:extra&&extra.aiScore!==undefined?extra.aiScore:undefined,
+        read:false,
+        timestamp:new Date().toISOString()
+      });
+    }
   }
   var tgMsg="<b>❌ ORDER REJECTED</b>\n\n"
     +"🎮 <b>"+order.game+"</b>\n"
@@ -1067,8 +1072,9 @@ function vO(i){
       +'<div style="font-size:13px;font-weight:800">'+usr+'</div></div>'
       +infoRows+rcp;
     document.getElementById("mFt").innerHTML=
-      '<button class="mb dl" onclick="delOrder('+i+');cM()">Delete Order</button>'
-      +'<button class="mb cn" onclick="cM()">Close</button>';
+      '<button class="mb sv" style="background:var(--yw);border-color:var(--yw);font-size:11px" onclick="unlockOrder('+i+')">🔓 Unlock & Reopen</button>'
+      +'<button class="mb dl" style="font-size:11px" onclick="delOrder('+i+');cM()">Delete</button>'
+      +'<button class="mb cn" style="font-size:11px" onclick="cM()">Close</button>';
   } else if(o.status==="pending"){
     document.getElementById("mBd").innerHTML=
       rejectBanner
@@ -1100,6 +1106,48 @@ function vO(i){
   document.getElementById("mo").classList.add("on");
 }
 function svO(i){O[i].status=document.getElementById("xOS").value;O[i].userId=document.getElementById("xOU").value;O[i].serverId=document.getElementById("xOSv").value;if(fb&&O[i].fbId)db.collection("orders").doc(O[i].fbId).update({status:O[i].status,userId:O[i].userId,serverId:O[i].serverId});toast("Saved","ok");rOrd();rDash();cM();}
+
+function unlockOrder(i){
+  var order=O[i];if(!order)return;
+  adWarn({
+    title:"Unlock Order?",
+    msg:"Order ကို Pending အဖြစ် ပြန်ဖွင့်မည်။ Admin မှ Manual Review လုပ်နိုင်မည်။",
+    okLabel:"Unlock",type:"blue",icon:"lock",
+    onOk:function(){
+      O[i].status="pending";
+      O[i].autoLocked=false;
+      O[i].autoRejected=false;
+      O[i].rejectReason="";
+      if(fb&&O[i].fbId){
+        db.collection("orders").doc(O[i].fbId).update({
+          status:"pending",
+          autoLocked:false,
+          autoRejected:false,
+          rejectReason:"",
+          unlockedAt:new Date().toISOString(),
+          unlockedBy:"admin"
+        });
+        // User ကို Unlock notification ပို့
+        var uid=order.authUser&&order.authUser!=="guest"?order.authUser:null;
+        if(uid!=="guest"){
+        if(uid){
+          db.collection("notifications").add({
+            userId:uid,
+            type:"order",
+            title:"🔓 Order Reopened — Admin မှ ပြန်စစ်ဆေးမည်",
+            message:"🎮 Game: "+(order.game||"—")+"\n📦 Order ID: "+(order.txnId||order.fbId||"—")+"\n\n✅ Admin မှ Order ကို ပြန်ဖွင့်ပေးပါသည်။ တတ်နိုင်ရင် Receipt Screenshot ပြန်တင်ပေးပါ။",
+            orderId:order.txnId||order.fbId||"",
+            read:false,
+            timestamp:new Date().toISOString()
+          });
+        }
+        }
+      }
+      toast("Order Unlocked — Pending ပြန်ဖြစ်ပါပြီ","ok");
+      rOrd();rDash();cM();
+    }
+  });
+}
 
 // ═══ GIVEAWAY MILESTONE — 20 confirmed orders check ═══
 var GIVEAWAY_MILESTONE=20;
@@ -2279,7 +2327,9 @@ function subOrders(){
               autoLocked:true   // ← Edit လုပ်လို့မရအောင် lock
             });
             // User notification (bell icon) ထဲ ပို့
-            var uid=O[idx].authUser||O[idx].pcaId||"guest";
+          // Notification — authUser (email) ရှိတဲ့ User ကိုသာ ပို့
+          var uid=O[idx].authUser&&O[idx].authUser!=="guest"?O[idx].authUser:null;
+          if(uid){
             db.collection("notifications").add({
               userId:uid,
               type:"rejected",
@@ -2289,6 +2339,7 @@ function subOrders(){
               read:false,
               timestamp:new Date().toISOString()
             });
+          }
           }
           toast("Auto-rejected & Locked: Receipt မပါ","er");
           rDash();rOrd();
