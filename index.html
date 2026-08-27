@@ -221,22 +221,6 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
   </div>
 </div>
 
-<!-- ═══ LOGIN ═══ -->
-<div id="adminAuth" class="auth-sc">
-  <div><div class="auth-logo"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.1-.45 2.1-1.17 2.83A4 4 0 0118 8a4 4 0 01-1.17 2.83A4 4 0 0118 14a4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 011.17-2.83A4 4 0 016 14a4 4 0 011.17-2.83A4 4 0 116 8a4 4 0 014-4 4 4 0 012-4zm0 6a2 2 0 100 4 2 2 0 000-4z"/></svg></div>
-  <div class="auth-title"><span>PCA Store</span> Admin</div><div class="auth-sub">Dashboard Login</div></div>
-  <div class="auth-card">
-    <div class="fg"><label>Username</label><input id="adEm" type="text" placeholder="e.g. PCA28"/></div>
-    <div class="fg"><label>Password</label><div class="pw-wrap"><input id="adPw" type="password" placeholder="Enter password"/><button class="pw-eye" onclick="togglePw('adPw',this)" type="button"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-    <button class="btn-main orange" onclick="adLogin()">Sign In</button>
-    <div id="adErr" class="auth-err"></div>
-    <div style="display:flex;gap:6px;margin-top:14px">
-      <button onclick="quickLogin('PCA28')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--bd2);background:rgba(0,102,255,.08);color:var(--ac);font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f)">PCA28</button>
-      <button onclick="quickLogin('Raycod28')" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--bd2);background:rgba(123,104,238,.08);color:#7b68ee;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f)">Raycod28</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══ 2FA ═══ -->
 <div id="twoFaScreen" class="auth-sc" style="display:none">
   <div><div class="auth-logo" style="background:linear-gradient(135deg,#059669,#06b6d4)"><svg viewBox="0 0 24 24" style="fill:none;stroke:#fff;stroke-width:1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1"/></svg></div>
@@ -253,7 +237,6 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
     </div>
     <button class="btn-main green" onclick="verify2FA()">Verify Code</button>
     <div id="tfaErr" class="auth-err"></div>
-    <button class="auth-link" onclick="back2Login()">Back to Login</button>
     <div class="auth-hint"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Open Google Authenticator → Enter 6-digit code</div>
   </div>
 </div>
@@ -322,64 +305,14 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
 <div class="tst" id="tst"></div>
 
 <script>
-var FC={apiKey:"AIzaSyCRq3M1hclmBnqClfQrmv8WGE6-hth0Zr0",authDomain:"dahliagametopupstore-9d3fd.firebaseapp.com",projectId:"dahliagametopupstore-9d3fd",storageBucket:"dahliagametopupstore-9d3fd.appspot.com",messagingSenderId:"110787045948",appId:"1:110787045948:web:e46ed650774c0f6128f139"};
+var FC={apiKey:"AIzaSyAaa_stXEri8e8TRMOCh9D-b0LcOhv4Aho",authDomain:"kusanagi3.firebaseapp.com",projectId:"kusanagi3",storageBucket:"kusanagi3.firebasestorage.app",messagingSenderId:"1033307580536",appId:"1:1033307580536:web:060303924f8cd4ed8ea58d"};
 var db=null,fb=false,adAuth=null;
 if(typeof firebase!=='undefined'){try{firebase.initializeApp(FC);db=firebase.firestore();adAuth=firebase.auth();adAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});fb=true;}catch(e){fb=false;}}
 
-// Password eye toggle
-function togglePw(id,btn){var i=document.getElementById(id);if(i.type==="password"){i.type="text";btn.innerHTML='<svg viewBox="0 0 24 24" stroke-width="1.8" style="width:18px;height:18px;stroke:var(--ac);fill:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';}else{i.type="password";btn.innerHTML='<svg viewBox="0 0 24 24" stroke-width="1.8" style="width:18px;height:18px;stroke:var(--tx3);fill:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}}
-
-// Quick login buttons
-function quickLogin(name){document.getElementById("adEm").value=name;document.getElementById("adPw").focus();}
-
-// Local admin credentials (Firebase Auth မလိုဘဲ login ဝင်နိုင်)
-var ADMINS={"PCA28":1,"Raycod28":1,"pca28":1,"raycod28":1};
-var _PW=atob("UENBMjgwODIz"); // obfuscated
-function _chkPw(pw){return pw===_PW;}
-var _localLoginUser=null; // local login ဖြစ်ကြောင်း မှတ်ထားတဲ့ flag
-function adLogin(){
-  var raw=document.getElementById("adEm").value.trim();
-  var pw=document.getElementById("adPw").value;
-  var err=document.getElementById("adErr");
-  if(!raw||!pw){err.textContent="Username & password required";return;}
-
-  // ── Local check (ပထမဆုံး) ──────────────────────────
-  if(ADMINS[raw]!==undefined){
-    if(ADMINS[raw]&&_chkPw(pw)){
-      err.textContent="";
-      _localLoginUser=raw; // local login username မှတ်ထား
-      check2FA();
-      return;
-    } else {
-      err.textContent="Wrong password";
-      return;
-    }
-  }
-
-  // ── Firebase Auth fallback (Google account login) ──
-  if(!adAuth){err.textContent="Account not found";return;}
-  var em=raw;if(em.indexOf("@")===-1)em=raw.toLowerCase()+"@gmail.com";
-  err.textContent="Signing in...";
-  adAuth.signInWithEmailAndPassword(em,pw)
-    .then(function(r){err.textContent="";_localLoginUser=null;check2FA();})
-    .catch(function(e){
-      var m=e.code==="auth/user-not-found"?"Account not found":
-             e.code==="auth/wrong-password"?"Wrong password":
-             e.code==="auth/invalid-email"?"Invalid username":
-             "Login failed";
-      err.textContent=m;
-    });
-}
-// Auth state: Firebase persistent login — local login နဲ့ conflict မဖြစ်အောင် စစ်
-if(adAuth){
-  adAuth.onAuthStateChanged(function(u){
-    if(u && !window._adminInited && !_localLoginUser){
-      // Firebase persistent session နဲ့သာ auto-enter (local login မဟုတ်ရင်)
-      enterDash(u);
-    }
-  });
-}
-document.addEventListener("keydown",function(e){if(e.key==="Enter"){var auth=document.getElementById("adminAuth");var tfa=document.getElementById("twoFaScreen");if(auth&&auth.offsetParent!==null&&auth.style.display!=="none")adLogin();if(tfa&&tfa.style.display==="flex")verify2FA();}});
+var _localLoginUser=null;
+// Login form removed — go straight to the dashboard (2FA still applies if enabled in Settings)
+check2FA();
+document.addEventListener("keydown",function(e){if(e.key==="Enter"){var tfa=document.getElementById("twoFaScreen");if(tfa&&tfa.style.display==="flex")verify2FA();}});
 
 // 2FA
 var TOTP_SECRET="",twoFaEnabled=false;
@@ -392,14 +325,12 @@ function check2FA(){
     if(done)return;done=true;clearTimeout(t);
     if(d.exists&&d.data().enabled&&d.data().secret){
       TOTP_SECRET=d.data().secret;twoFaEnabled=true;
-      document.getElementById("adminAuth").style.display="none";
       document.getElementById("twoFaScreen").style.display="flex";
       document.querySelectorAll(".otp-in")[0].focus();
     }else{enterDash();}
   }).catch(function(){if(!done){done=true;clearTimeout(t);enterDash();}});
 }
 function enterDash(user){
-  document.getElementById("adminAuth").style.display="none";
   document.getElementById("twoFaScreen").style.display="none";
   document.getElementById("adminApp").style.display="block";
   // Local login ဆိုရင် username ကိုသုံး၊ Firebase login ဆိုရင် email ကိုသုံး
@@ -416,7 +347,7 @@ function enterDash(user){
     rDash();
   }
 }
-function back2Login(){if(adAuth)adAuth.signOut();document.getElementById("twoFaScreen").style.display="none";document.getElementById("adminAuth").style.display="flex";document.getElementById("tfaErr").textContent="";document.querySelectorAll(".otp-in").forEach(function(i){i.value="";});}
+function back2Login(){if(adAuth)adAuth.signOut();document.getElementById("twoFaScreen").style.display="none";document.getElementById("tfaErr").textContent="";document.querySelectorAll(".otp-in").forEach(function(i){i.value="";});check2FA();}
 function otpNav(el,i){var ins=document.querySelectorAll(".otp-in");if(el.value&&i<5)ins[i+1].focus();if(i===5&&el.value)verify2FA();}
 function otpDel(e,i){if(e.key==="Backspace"&&!e.target.value&&i>0)document.querySelectorAll(".otp-in")[i-1].focus();}
 function b32decode(s){var a="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",b=0,v=0,r=[];s=s.replace(/[^A-Z2-7]/gi,"").toUpperCase();for(var i=0;i<s.length;i++){v=(v<<5)|a.indexOf(s[i]);b+=5;if(b>=8){r.push((v>>>(b-8))&255);b-=8;}}return new Uint8Array(r);}
