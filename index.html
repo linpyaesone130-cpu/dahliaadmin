@@ -56,16 +56,18 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 /* Firebase bar */
 .fb-bar{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px;font-size:9px;font-weight:700;background:rgba(0,102,255,.06);border-bottom:1px solid var(--bd);color:var(--tx3)}.fb-bar .dot{width:6px;height:6px;border-radius:50%}
 /* Content */
-.cnt{padding:14px 14px 100px}
+.cnt{padding:14px 14px 24px}
 .pg{display:none;animation:fi .25s}.pg.on{display:block}
 @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{to{transform:rotate(360deg)}}
 /* Nav */
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(255,255,255,.97);border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 4px calc(env(safe-area-inset-bottom,6px)+10px);z-index:40;backdrop-filter:blur(20px);box-shadow:0 -1px 0 var(--bd),0 -8px 32px rgba(0,102,255,.08)}
+.topbar{position:sticky;top:0;z-index:41}
+.nav{position:relative;width:100%;background:rgba(255,255,255,.97);border-bottom:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 4px;z-index:39;backdrop-filter:blur(20px);box-shadow:0 1px 0 var(--bd),0 8px 32px rgba(0,102,255,.08);overflow-x:auto}
 .nb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 10px;border:none;background:none;cursor:pointer;border-radius:12px;font-family:var(--f);transition:all .18s;position:relative;min-width:48px;}.nb:active{transform:scale(.88)}.nb svg{width:20px;height:20px;stroke:var(--tx3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:all .18s;}.nb .nl{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px;transition:all .18s;}
 .nb.on{background:rgba(0,102,255,.12);}.nb.on svg{stroke:var(--ac);}.nb.on .nl{color:var(--ac);}
 .nb .bdg{position:absolute;top:3px;right:5px;min-width:16px;height:16px;border-radius:8px;background:var(--rd);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid rgba(255,255,255,.97)}
 /* Cards */
 .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .scard{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:16px;transition:all .2s;}.scard:hover{box-shadow:0 4px 20px rgba(0,102,255,.12);border-color:var(--bd2);}
 .scard .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}.scard .ic svg{width:20px;height:20px;fill:none;stroke-width:1.7;stroke-linecap:round;}
 .scard .lb{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;}.scard .vl{font-size:22px;font-weight:900;margin-top:3px;font-family:var(--m);}
@@ -101,7 +103,9 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 /* Image upload */
 .img-up{width:100%;height:100px;border:2px dashed var(--bd);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--sf2);overflow:hidden;position:relative;transition:border-color .15s;}.img-up:active{border-color:var(--ac);}.img-up img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}.img-up svg{width:24px;height:24px;stroke:var(--tx3);fill:none;}.img-up span{font-size:10px;color:var(--tx3);font-weight:600;margin-top:4px;}
 /* Package list */
-.pkl{display:flex;flex-direction:column;gap:6px;margin-top:6px;}.pkr{display:flex;gap:6px;align-items:center;}.pkr input{flex:1;padding:9px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--sf2);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;transition:border-color .15s;}.pkr input:focus{border-color:var(--ac);}.pkrm{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--bd);background:none;cursor:pointer;color:var(--rd);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;}
+.pkl{display:flex;flex-direction:column;gap:8px;margin-top:6px;}.pkr{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:10px;background:var(--sf2);}.pkr-top,.pkr-bot{display:flex;gap:6px;align-items:center;}.pkr input{flex:1;padding:9px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;transition:border-color .15s;min-width:0;}.pkr input:focus{border-color:var(--ac);}.pkrm{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--bd);background:none;cursor:pointer;color:var(--rd);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;}
+.pkpct{font-size:10px;font-weight:800;padding:0 8px;height:30px;border-radius:7px;white-space:nowrap;display:flex;align-items:center;justify-content:center;min-width:52px;flex-shrink:0;}.pkpct.pos{background:rgba(0,176,92,.12);color:var(--gn);}.pkpct.neg{background:rgba(229,57,53,.1);color:var(--rd);}.pkpct.zero{background:var(--sf3);color:var(--tx3);}
+.pkmk{display:flex;align-items:center;gap:6px;margin-bottom:8px;}.pkmk input{width:64px;padding:8px 9px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf2);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;}
 .pka{width:100%;padding:9px;border-radius:9px;border:1.5px dashed var(--bd);background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--ac);font-family:var(--f);margin-top:4px;text-align:center;transition:all .15s;}.pka:hover{background:rgba(0,102,255,.06);border-color:var(--ac);}
 /* Settings */
 .stc{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:16px;margin-bottom:12px;}
@@ -184,6 +188,7 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
   .hdr{padding:14px 32px}
   .cnt{padding:20px 32px 110px}
   .grid2{grid-template-columns:repeat(5,1fr)}
+  .game-grid{grid-template-columns:repeat(5,1fr)}
   .fb-bar{padding:6px 32px}
 }
 @media (min-width:1180px){
@@ -270,6 +275,7 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
 
 <!-- ═══ MAIN APP ═══ -->
 <div id="adminApp" class="app" style="display:none">
+  <div class="topbar">
   <div class="hdr">
     <div class="hdr-logo">
       <div class="mark"><svg viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
@@ -285,11 +291,6 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <button onclick="manualRefresh()" style="width:28px;height:28px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Refresh"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--tx3);fill:none;stroke-width:2;stroke-linecap:round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>
     </div>
   </div>
-  <div class="fb-bar" id="fbBar">
-    <span class="dot" id="fbDot" style="background:var(--tx3)"></span>
-    <span id="fbTxt">Connecting...</span>
-  </div>
-  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-register"></div><div class="pg" id="pg-verify"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
   <div class="nav">
     <button class="nb on" data-p="dash" onclick="go('dash')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
@@ -327,6 +328,12 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <span class="nl">Settings</span>
     </button>
   </div>
+  </div>
+  <div class="fb-bar" id="fbBar">
+    <span class="dot" id="fbDot" style="background:var(--tx3)"></span>
+    <span id="fbTxt">Connecting...</span>
+  </div>
+  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-register"></div><div class="pg" id="pg-verify"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
 </div>
 <div class="mo" id="mo"><div class="mc"><div class="m-handle"></div><div class="mt"><h3 id="mTi"></h3><button class="mx" onclick="cM()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div id="mBd"></div><div class="mf" id="mFt"></div></div></div>
 <div class="tst" id="tst"></div>
@@ -438,8 +445,11 @@ function renderG2BulkPickerList(){
   if(!list.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--tx3);font-size:12px">No games found</div>';return;}
   el.innerHTML=list.map(function(g,i){
     var idx=G2BULK_GAMES_LIST.indexOf(g);
-    var thumb=g.image?'<img src="'+g.image+'" style="width:100%;height:100%;object-fit:cover"/>':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--sf2);font-size:9px;color:var(--tx3)">No Image</div>';
-    return'<div onclick="selectG2BulkGame('+idx+')" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--bd);background:var(--sf2)"><div style="width:100%;aspect-ratio:1;overflow:hidden">'+thumb+'</div><div style="font-size:9px;font-weight:700;padding:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+g.name+'</div></div>';
+    var fallback='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--sf2);font-size:9px;color:var(--tx3);text-align:center;padding:4px">🎮</div>';
+    var thumb=g.image?'<img src="'+g.image+'" loading="lazy" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\''+fallback.replace(/'/g,"\\'")+'\'"/>':fallback;
+    return'<div onclick="selectG2BulkGame('+idx+')" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--bd);background:var(--sf2);min-height:60px">'
+      +'<div style="width:100%;height:0;padding-bottom:100%;position:relative;background:var(--sf2)">'+thumb+'</div>'
+      +'<div style="font-size:9px;font-weight:700;padding:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+(g.name||"Unknown")+'</div></div>';
   }).join("");
 }
 function selectG2BulkGame(idx){
@@ -467,7 +477,9 @@ async function importG2BulkCatalogue(code){
     var pkL=document.getElementById("pkL");
     if(pkL)pkL.innerHTML=items.map(function(c){
       var mmk=Math.round((parseFloat(c.amount)||0)*G2BULK_RATE);
-      return'<div class="pkr"><input placeholder="Amount" value="'+c.name+'" class="pkd"><input placeholder="Price (MMK)" value="'+mmk+'" class="pkp"><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>';
+      var mk=parseFloat((document.getElementById("pkMarkup")||{}).value)||4;
+      var price=roundNice(mmk*(1+mk/100));
+      return pkRowHtml(c.name,mmk,price);
     }).join("");
     toast(items.length+" packages imported (rate: "+G2BULK_RATE+")","ok");
   }catch(e){
@@ -1445,7 +1457,7 @@ function rContent(){
 var gvSubTab="items";
 function rgT(){
   var h='<div class="cw"><div class="cw-h"><div class="cw-t">Games ('+G.length+')</div><button class="bt pr" onclick="eG(-1)">+ Add</button></div>';
-  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px">';
+  h+='<div class="game-grid" style="padding:10px">';
   h+=G.map(function(g,i){
     var imgHtml=g.img
       ?'<div class="grid-card-skel"></div><img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;object-position:center;position:absolute;inset:0;display:block;opacity:0;transition:opacity .3s" onload="this.style.opacity=1;this.previousSibling.style.display=\'none\'" onerror="this.style.display=\'none\'">'
@@ -1454,7 +1466,7 @@ function rgT(){
       +imgHtml
       +'<div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,rgba(0,0,0,.1) 42%,transparent 65%);pointer-events:none"></div>'
       +'<div onpointerdown="gGripDown(event,'+i+')" style="position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:7px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none"><svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/></svg></div>'
-      +'<div style="position:absolute;top:4px;right:4px;display:flex;gap:3px"><div class="ab" style="width:22px;height:22px;background:rgba(255,255,255,.92);color:var(--ac)" onclick="event.stopPropagation();eG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:11px;height:11px"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div><div class="ab" style="width:22px;height:22px;background:rgba(255,255,255,.92);color:var(--rd)" onclick="event.stopPropagation();dG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:11px;height:11px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></div></div>'
+      +'<div style="position:absolute;top:4px;right:4px;display:flex;gap:3px"><div class="ab" style="width:auto;height:22px;padding:0 6px;gap:3px;background:rgba(255,255,255,.92);color:var(--ac)" onclick="event.stopPropagation();eG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:11px;height:11px;flex-shrink:0"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg><span style="font-size:9px;font-weight:800">Edit</span></div><div class="ab" style="width:auto;height:22px;padding:0 6px;gap:3px;background:rgba(255,255,255,.92);color:var(--rd)" onclick="event.stopPropagation();dG('+i+')"><svg viewBox="0 0 24 24" stroke="currentColor" style="width:11px;height:11px;flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg><span style="font-size:9px;font-weight:800">Delete</span></div></div>'
       +'<div style="position:absolute;bottom:0;left:0;right:0;padding:6px 7px"><div style="font-size:10px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.5)">'+g.n+'</div><div style="font-size:8px;color:rgba(255,255,255,.85);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+g.cur+' • '+g.pl+'</div></div>'
       +'</div>';
   }).join("")||'<div class="emp" style="grid-column:1/-1">No games</div>';
@@ -1500,26 +1512,33 @@ function eG(i){
   var cardIp=g.img?'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Card Image</span>';
   var bnrIp=g.bannerImg?'<img src="'+g.bannerImg+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Banner Image</span>';
   document.getElementById("mBd").innerHTML=
-    '<div class="fg"><label>Card Image</label>'
-    +'<div class="img-up" style="height:130px;position:relative" onclick="uploadImg(\'gImg\',this)">'+cardIp+'</div>'
+    '<div class="fg"><div style="display:flex;gap:10px;align-items:flex-start">'
+    +'<div style="flex:1;min-width:0"><label>Card Image (1:1)</label>'
+    +'<div class="img-up" style="width:100%;height:0;padding-bottom:100%;position:relative" onclick="uploadImg(\'gImg\',this)">'+cardIp+'</div>'
     +'<input type="hidden" id="gImg" value="'+(g.img||"")+'"/></div>'
-    +'<div class="fg"><label>Banner Image (Detail Page)</label>'
-    +'<div class="img-up" style="height:130px;position:relative" onclick="uploadImg(\'gBnr\',this)">'+bnrIp+'</div>'
+    +'<div style="flex:1;min-width:0"><label>Banner (16:9)</label>'
+    +'<div class="img-up" style="width:100%;height:0;padding-bottom:56.25%;position:relative" onclick="uploadImg(\'gBnr\',this)">'+bnrIp+'</div>'
     +'<input type="hidden" id="gBnr" value="'+(g.bannerImg||"")+'"/></div>'
+    +'</div></div>'
     +'<div class="fg"><label>Name</label><div style="display:flex;gap:6px"><input id="gN" value="'+g.n+'" style="flex:1"/><button type="button" class="bt pr" style="white-space:nowrap" onclick="openG2BulkPicker()">🔍 G2Bulk</button></div><input type="hidden" id="gG2bCode" value="'+(g.g2bulkCode||"")+'"/></div>'
     +'<div class="fg"><label>Currency Name</label><input id="gCr" value="'+g.cur+'" placeholder="e.g. Diamonds, UC, Gems"/></div>'
     +'<div class="fg"><div class="rw"><div style="display:none"><label>Color</label><input id="gCo" type="color" value="'+(g.c||'#1d4ed8')+'" style="height:40px;padding:2px"/></div><div><label>Platform</label><select id="gPl"><option'+(g.pl==="Mobile"?" selected":"")+'>Mobile</option><option'+(g.pl==="PC"?" selected":"")+'>PC</option><option'+(g.pl==="Cross"?" selected":"")+'>Cross</option></select></div></div></div>'
     +'<div class="fg"><div style="display:flex;align-items:center;justify-content:space-between"><label style="margin:0">Show Server ID</label><label class="tgl"><input type="checkbox" id="gSid" '+(g.showSid?"checked":"")+'/><span class="ts"></span></label></div></div>'
-    +'<div class="fg"><label>Packages</label><div class="pkl" id="pkL">'
-    +g.pr.map(function(p){return'<div class="pkr"><input placeholder="Amount" value="'+p.d+'" class="pkd"><input placeholder="Price (MMK)" value="'+p.p+'" class="pkp"><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>';}).join("")
+    +'<div class="fg"><label>Packages</label><div class="pkmk">Markup <input id="pkMarkup" value="4" inputmode="decimal">% <button type="button" class="bt pr" onclick="applyMarkupAll()">Apply to all</button></div><div class="pkl" id="pkL">'
+    +g.pr.map(function(p){return pkRowHtml(p.d,p.c,p.p);}).join("")
     +'</div><button class="pka" onclick="addPk()">+ Package</button></div>';
   document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sG('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dG('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';
   document.getElementById("mo").classList.add("on");
 }
 function promptImg(){uploadImg("gImg",document.querySelector(".img-up"));}
-function addReg(){document.getElementById("regL").insertAdjacentHTML("beforeend",'<div class="pkr" style="flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" class="rgN" style="flex:1"><input placeholder="Flag" class="rgF" style="width:50px"><input placeholder="Tap for image" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
-function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",'<div class="pkr"><input placeholder="Amount" class="pkd"><input placeholder="Price (MMK)" class="pkp"><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
-function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg")?document.getElementById("gImg").value:"",bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",g2bulkCode:document.getElementById("gG2bCode")?document.getElementById("gG2bCode").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,regions:[],pr:[]};document.querySelectorAll(".pkd").forEach(function(el,j){var pe=document.querySelectorAll(".pkp")[j];if(el.value&&pe.value)o.pr.push({d:el.value,p:parseInt(pe.value)||0});});if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb){var fsDoc={n:o.n,e:o.e,c:o.c,cur:o.cur,ci:o.ci,pl:o.pl,img:o.img,bannerImg:o.bannerImg,g2bulkCode:o.g2bulkCode,showSid:o.showSid};if(o.pr&&o.pr.length>0)fsDoc.pr=o.pr;db.collection("games").doc(o.n).set(fsDoc,{merge:true});}toast("Game saved","ok");rContent();cM();}
+function pkPct(cost,price){cost=parseFloat(cost)||0;price=parseFloat(price)||0;var pct=cost>0?((price-cost)/cost*100):0;var cls=pct>0?"pos":(pct<0?"neg":"zero");return{cls:cls,txt:(pct>0?"+":"")+pct.toFixed(1)+"%"};}
+function pkRowHtml(amount,cost,price){amount=amount==null?"":amount;cost=cost==null?"":cost;price=price==null?"":price;var b=pkPct(cost,price);return'<div class="pkr"><div class="pkr-top"><input placeholder="Amount" value="'+amount+'" class="pkd" style="flex:1"><button class="pkrm" onclick="this.closest(\'.pkr\').remove()">×</button></div><div class="pkr-bot"><input placeholder="Cost (MMK)" value="'+cost+'" class="pkc" oninput="pkRecalc(this)"><input placeholder="Price (MMK)" value="'+price+'" class="pkp" oninput="pkRecalc(this)"><span class="pkpct '+b.cls+'">'+b.txt+'</span></div></div>';}
+function pkRecalc(el){var row=el.closest(".pkr");var b=pkPct(row.querySelector(".pkc").value,row.querySelector(".pkp").value);var badge=row.querySelector(".pkpct");badge.className="pkpct "+b.cls;badge.textContent=b.txt;}
+function roundNice(v){if(v<10000)return Math.round(v/100)*100;if(v<50000)return Math.round(v/500)*500;if(v<200000)return Math.round(v/1000)*1000;if(v<1000000)return Math.round(v/5000)*5000;return Math.round(v/10000)*10000;}
+function applyMarkupAll(){var mk=parseFloat(document.getElementById("pkMarkup").value)||0;document.querySelectorAll(".pkr").forEach(function(row){var costEl=row.querySelector(".pkc"),priceEl=row.querySelector(".pkp");var cost=parseFloat(costEl.value)||0;if(cost<=0)return;priceEl.value=roundNice(cost*(1+mk/100));pkRecalc(priceEl);});toast("Markup applied","ok");}
+function addReg(){document.getElementById("regL").insertAdjacentHTML("beforeend",'<div class="pkr" style="flex-direction:row;flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" class="rgN" style="flex:1"><input placeholder="Flag" class="rgF" style="width:50px"><input placeholder="Tap for image" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
+function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",pkRowHtml("","",""));}
+function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg")?document.getElementById("gImg").value:"",bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",g2bulkCode:document.getElementById("gG2bCode")?document.getElementById("gG2bCode").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,regions:[],pr:[]};document.querySelectorAll(".pkr").forEach(function(row){var d=row.querySelector(".pkd").value,c=row.querySelector(".pkc").value,p=row.querySelector(".pkp").value;if(d&&p)o.pr.push({d:d,c:parseInt(c)||0,p:parseInt(p)||0});});if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb){var fsDoc={n:o.n,e:o.e,c:o.c,cur:o.cur,ci:o.ci,pl:o.pl,img:o.img,bannerImg:o.bannerImg,g2bulkCode:o.g2bulkCode,showSid:o.showSid};if(o.pr&&o.pr.length>0)fsDoc.pr=o.pr;db.collection("games").doc(o.n).set(fsDoc,{merge:true});}toast("Game saved","ok");rContent();cM();}
 function dG(i){adWarn({title:"Delete Game?",msg:"Delete \""+G[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("games").doc(G[i].n).delete();G.splice(i,1);toast("Deleted","ok");rContent();}});}
 var evAdmFilter="all";
 function reT(){
@@ -1568,7 +1587,7 @@ function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game
 function sPrm(i){var o={t:document.getElementById("prmT").value,d:document.getElementById("prmD").value,x:document.getElementById("prmX").value,exp:document.getElementById("prmE").value,img:document.getElementById("prmImg").value,caption:document.getElementById("prmCap").value,game:document.getElementById("prmGm").value,gameId:document.getElementById("prmGid").value,gameServer:document.getElementById("prmGsv").value,gameRank:document.getElementById("prmGrk").value,gallery:document.getElementById("prmGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)PRM[i]=o;else PRM.push(o);if(fb)db.collection("promos").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
 function dPrm(i){adWarn({title:"Delete Account?",msg:"Delete \""+PRM[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}});}
 function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&(o.status==="confirmed"||o.status==="success")}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
-function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Logo Image</label><div class="img-up" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div><div class="fg"><label>QR Code</label><div class="img-up" style="height:70px" onclick="uploadImg(&quot;pyQ&quot;,this)">'+(p.qr?'<img src="'+p.qr+'"/>':'<span style="font-size:10px">Tap to upload QR</span>')+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
+function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';var qp=p.qr?'<img src="'+p.qr+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<span style="font-size:10px">Tap to upload QR</span>';document.getElementById("mBd").innerHTML='<div class="fg"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><label>Logo Image (1:1)</label><div class="img-up" style="width:100%;height:0;padding-bottom:100%;position:relative" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div style="flex:1;min-width:0"><label>QR Code (1:1)</label><div class="img-up" style="width:100%;height:0;padding-bottom:100%;position:relative" onclick="uploadImg(&quot;pyQ&quot;,this)">'+qp+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div></div></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPy(i){var p=i>=0?P[i]:{ic:"$",col:"#1d4ed8"};var o={n:document.getElementById("pyN").value,ic:p.ic||"$",col:p.col||"#1d4ed8",hd:document.getElementById("pyH").value,ph:document.getElementById("pyP").value,img:document.getElementById("pyImg").value,qr:document.getElementById("pyQ")?document.getElementById("pyQ").value:""};if(!o.n){toast("Required","er");return;}if(i>=0)P[i]=o;else P.push(o);if(fb)db.collection("payments").doc(o.n).set(o);toast("Saved","ok");rPay();cM();}
 function dPy(i){adWarn({title:"Delete Payment?",msg:"Delete \""+P[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("payments").doc(P[i].n).delete();P.splice(i,1);toast("Deleted","ok");rPay();}});}
 
