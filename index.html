@@ -104,6 +104,11 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx);display:flex;just
 .img-up{width:100%;height:100px;border:2px dashed var(--bd);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--sf2);overflow:hidden;position:relative;transition:border-color .15s;}.img-up:active{border-color:var(--ac);}.img-up img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}.img-up svg{width:24px;height:24px;stroke:var(--tx3);fill:none;}.img-up span{font-size:10px;color:var(--tx3);font-weight:600;margin-top:4px;}
 /* Package list */
 .pkl{display:flex;flex-direction:column;gap:8px;margin-top:6px;}.pkr{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:10px;background:var(--sf2);}.pkr-top,.pkr-bot{display:flex;gap:6px;align-items:center;}.pkr input{flex:1;padding:9px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;transition:border-color .15s;min-width:0;}.pkr input:focus{border-color:var(--ac);}.pkrm{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--bd);background:none;cursor:pointer;color:var(--rd);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;}
+.g2b-gcard{display:flex;flex-direction:column;width:100%;border-radius:10px;overflow:hidden;border:1.5px solid var(--bd2);background:var(--sf);cursor:pointer;padding:0;font-family:var(--f);text-align:left;}.g2b-gcard:active{transform:scale(.96);}
+.g2b-gimg{width:100%;aspect-ratio:1/1;position:relative;background:linear-gradient(135deg,var(--sf3),var(--sf2));display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.g2b-gicon{display:none;font-size:22px;opacity:.4;}
+.g2b-gimg.g2b-noimg .g2b-gicon{display:block;}
+.g2b-gname{font-size:9.5px;font-weight:700;padding:5px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx);border-top:1px solid var(--bd);background:var(--sf2);}
 .pkpct{font-size:10px;font-weight:800;padding:0 8px;height:30px;border-radius:7px;white-space:nowrap;display:flex;align-items:center;justify-content:center;min-width:52px;flex-shrink:0;}.pkpct.pos{background:rgba(0,176,92,.12);color:var(--gn);}.pkpct.neg{background:rgba(229,57,53,.1);color:var(--rd);}.pkpct.zero{background:var(--sf3);color:var(--tx3);}
 .pkmk{display:flex;align-items:center;gap:6px;margin-bottom:8px;}.pkmk input{width:64px;padding:8px 9px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf2);font-size:12px;font-family:var(--f);color:var(--tx);outline:none;}
 .pka{width:100%;padding:9px;border-radius:9px;border:1.5px dashed var(--bd);background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--ac);font-family:var(--f);margin-top:4px;text-align:center;transition:all .15s;}.pka:hover{background:rgba(0,102,255,.06);border-color:var(--ac);}
@@ -232,8 +237,14 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <div class="warn-ttl" style="margin:0">G2Bulk Games</div>
       <button onclick="closeG2BulkPicker()" style="border:none;background:none;cursor:pointer;color:var(--tx3)"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <input id="g2bSearch" placeholder="Search game..." oninput="renderG2BulkPickerList()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);font-size:13px;font-family:var(--f);color:var(--tx);outline:none;margin-bottom:10px"/>
-    <div id="g2bPickerList" style="overflow-y:auto;flex:1;min-height:120px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input id="g2bSearch" placeholder="Search game..." oninput="renderG2BulkPickerList()" style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);font-size:13px;font-family:var(--f);color:var(--tx);outline:none"/>
+      <button type="button" id="g2bRefreshBtn" onclick="refreshG2BulkGamesList()" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 12px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);cursor:pointer;font-family:var(--f)">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--ac);fill:none;stroke-width:2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        <span id="g2bCountBadge" style="font-size:9px;font-weight:800;color:var(--tx3)">—</span>
+      </button>
+    </div>
+    <div id="g2bPickerList" style="overflow-y:auto;flex:1;min-height:120px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
   </div>
 </div>
 
@@ -306,11 +317,6 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
       <span class="nl">Register</span>
       <span class="bdg" id="rBdg" style="display:none">0</span>
     </button>
-    <button class="nb" data-p="verify" onclick="go('verify')">
-      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-      <span class="nl">Verify</span>
-      <span class="bdg" id="vBdg" style="display:none">0</span>
-    </button>
     <button class="nb" data-p="content" onclick="go('content')">
       <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
       <span class="nl">Content</span>
@@ -333,7 +339,7 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
     <span class="dot" id="fbDot" style="background:var(--tx3)"></span>
     <span id="fbTxt">Connecting...</span>
   </div>
-  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-register"></div><div class="pg" id="pg-verify"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
+  <div class="cnt"><div class="pg on" id="pg-dash"></div><div class="pg" id="pg-orders"></div><div class="pg" id="pg-register"></div><div class="pg" id="pg-content"></div><div class="pg" id="pg-pays"></div><div class="pg" id="pg-set"></div><div class="pg" id="pg-users"></div></div>
 </div>
 <div class="mo" id="mo"><div class="mc"><div class="m-handle"></div><div class="mt"><h3 id="mTi"></h3><button class="mx" onclick="cM()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div id="mBd"></div><div class="mf" id="mFt"></div></div></div>
 <div class="tst" id="tst"></div>
@@ -391,7 +397,6 @@ async function verify2FA(){var ins=document.querySelectorAll(".otp-in");var code
 function genSecret(){var c="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",s="";for(var i=0;i<16;i++)s+=c[Math.floor(Math.random()*32)];return s;}
 
 var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"PCA Store Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"PCA Store — Fastest game top-up in Myanmar",banners:[],tgUsername:""};
-var VERI=[];
 var USERS=[]; // Firebase users collection real-time data
 var _usersUnsub=null;
 var curUnit="MMK",RATES={USD:0.00048,THB:0.017},SYMS={USD:"$",THB:"฿"};
@@ -416,25 +421,50 @@ function saveG2BulkKey(){
   verifyG2BulkKey();
 }
 async function fetchG2BulkGamesList(){
+  G2BULK_GAMES_LIST=[];
   try{
-    var res=await fetch("https://api.g2bulk.com/v1/games");
-    var data=await res.json();
-    var list=(data&&data.games)||[];
-    G2BULK_GAMES_LIST=list.map(function(g){
-      var img=g.image_url||"";
-      if(img&&img.indexOf("http")!==0)img="https://api.g2bulk.com"+img;
-      return{code:g.code||"",name:g.name||"Unknown",image:img};
-    });
-    return G2BULK_GAMES_LIST;
+    var page=1,totalPages=1,guard=0;
+    do{
+      guard++;
+      var url="https://api.g2bulk.com/v1/games";
+      if(page>1)url+="?page="+page;
+      var res=await fetch(url);
+      var data=await res.json();
+      var list=(data&&(data.games||data.data))||[];
+      list.forEach(function(g){
+        var img=g.image_url||g.image||"";
+        if(img&&img.indexOf("http")!==0)img="https://api.g2bulk.com"+img;
+        G2BULK_GAMES_LIST.push({code:g.code||"",name:g.name||"Unknown",image:img});
+      });
+      totalPages=(data&&(data.total_pages||data.last_page))||1;
+      page++;
+    }while(page<=totalPages&&guard<50);
   }catch(e){
     toast("G2Bulk Games list error: "+e.message,"er");
-    return[];
   }
+  var badge=document.getElementById("g2bCountBadge");
+  if(badge)badge.textContent=G2BULK_GAMES_LIST.length+" games";
+  return G2BULK_GAMES_LIST;
+}
+async function refreshG2BulkGamesList(){
+  var btn=document.getElementById("g2bRefreshBtn");
+  if(btn){btn.disabled=true;btn.style.opacity=".5";}
+  var badge=document.getElementById("g2bCountBadge");
+  if(badge)badge.textContent="…";
+  var list=document.getElementById("g2bPickerList");
+  if(list)list.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--tx3);font-size:12px">Refreshing...</div>';
+  await fetchG2BulkGamesList();
+  renderG2BulkPickerList();
+  toast(G2BULK_GAMES_LIST.length+" games loaded","ok");
+  if(btn){btn.disabled=false;btn.style.opacity="";}
 }
 async function openG2BulkPicker(){
   document.getElementById("g2bPickerOv").classList.add("on");
   document.getElementById("g2bPickerList").innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--tx3);font-size:12px">Loading...</div>';
+  var badge=document.getElementById("g2bCountBadge");
+  if(badge)badge.textContent="…";
   if(G2BULK_GAMES_LIST.length===0)await fetchG2BulkGamesList();
+  else{var b2=document.getElementById("g2bCountBadge");if(b2)b2.textContent=G2BULK_GAMES_LIST.length+" games";}
   renderG2BulkPickerList();
 }
 function closeG2BulkPicker(){document.getElementById("g2bPickerOv").classList.remove("on");}
@@ -443,13 +473,14 @@ function renderG2BulkPickerList(){
   var list=G2BULK_GAMES_LIST.filter(function(g){return g.name.toLowerCase().indexOf(q)>-1;});
   var el=document.getElementById("g2bPickerList");
   if(!list.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--tx3);font-size:12px">No games found</div>';return;}
-  el.innerHTML=list.map(function(g,i){
+  el.innerHTML=list.map(function(g){
     var idx=G2BULK_GAMES_LIST.indexOf(g);
-    var fallback='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--sf2);font-size:9px;color:var(--tx3);text-align:center;padding:4px">🎮</div>';
-    var thumb=g.image?'<img src="'+g.image+'" loading="lazy" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\''+fallback.replace(/'/g,"\\'")+'\'"/>':fallback;
-    return'<div onclick="selectG2BulkGame('+idx+')" style="cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid var(--bd);background:var(--sf2);min-height:60px">'
-      +'<div style="width:100%;height:0;padding-bottom:100%;position:relative;background:var(--sf2)">'+thumb+'</div>'
-      +'<div style="font-size:9px;font-weight:700;padding:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tx)">'+(g.name||"Unknown")+'</div></div>';
+    var thumb=g.image
+      ?'<img src="'+g.image+'" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'g2b-noimg\')"/>'
+      :'';
+    return'<button type="button" class="g2b-gcard" onclick="selectG2BulkGame('+idx+')">'
+      +'<div class="g2b-gimg'+(g.image?"":" g2b-noimg")+'">'+thumb+'<span class="g2b-gicon">🎮</span></div>'
+      +'<div class="g2b-gname">'+(g.name||"Unknown")+'</div></button>';
   }).join("");
 }
 function selectG2BulkGame(idx){
@@ -481,9 +512,45 @@ async function importG2BulkCatalogue(code){
       var price=roundNice(mmk*(1+mk/100));
       return pkRowHtml(c.name,mmk,price);
     }).join("");
+    if(typeof syncCurrentTabRows==="function")syncCurrentTabRows();
     toast(items.length+" packages imported (rate: "+G2BULK_RATE+")","ok");
   }catch(e){
     toast("Catalogue import error: "+e.message,"er");
+  }
+}
+async function updateG2BulkPrices(){
+  var codeEl=document.getElementById("gG2bCode");
+  var code=codeEl?codeEl.value:"";
+  if(!code){toast("ဒီဂိမ်းကို G2Bulk ကနေ ရွေးထားခြင်း မဟုတ်ပါ — Update Price သုံးလို့မရပါ","er");return;}
+  toast("Fetching latest prices...","in");
+  try{
+    var res=await fetch("https://api.g2bulk.com/v1/games/"+encodeURIComponent(code)+"/catalogue");
+    var data=await res.json();
+    var items=(data&&data.catalogues)||[];
+    if(!items.length){toast("Catalogue မရှိပါ","er");return;}
+    var mk=parseFloat((document.getElementById("pkMarkup")||{}).value)||4;
+    var priceMap={};
+    items.forEach(function(c){
+      var mmk=Math.round((parseFloat(c.amount)||0)*G2BULK_RATE);
+      priceMap[(c.name||"").toLowerCase().trim()]=mmk;
+    });
+    syncCurrentTabRows();
+    var updated=0;
+    _editTabs.forEach(function(tab){
+      (tab.pr||[]).forEach(function(p){
+        var key=(p.d||"").toLowerCase().trim();
+        if(Object.prototype.hasOwnProperty.call(priceMap,key)){
+          p.c=priceMap[key];
+          p.p=roundNice(p.c*(1+mk/100));
+          updated++;
+        }
+      });
+    });
+    renderPkRows();
+    if(updated>0)toast(updated+" package price(s) updated (rate: "+G2BULK_RATE+")","ok");
+    else toast("ကိုက်ညီတဲ့ package name မတွေ့ပါ — G2Bulk name တွေနဲ့ တူညီအောင် ပြင်ပါ","er");
+  }catch(e){
+    toast("Price update error: "+e.message,"er");
   }
 }
 async function fetchG2BulkTransactions(){
@@ -540,34 +607,6 @@ async function verifyG2BulkKey(){
     if(el)el.innerHTML='<span style="color:var(--rd);font-weight:800">✗ '+e.message+'</span>';
     toast("G2Bulk connection error","er");
   }
-}
-// Verify/Reject ID
-function verifyId(i){
-  var v=VERI[i];if(!v)return;
-  // Custom input modal အစား adWarn ကိုမသုံးဘဲ custom prompt modal သုံး
-  adPrompt({
-    title:"Verify ID",
-    msg:v.game+" • ID: <b style='font-family:var(--m);color:var(--ac)'>"+v.gameId+"</b>",
-    placeholder:"Enter in-game name",
-    okLabel:"Verify",
-    type:"blue",
-    icon:"lock",
-    onOk:function(name){
-      if(!name){toast("Name required","er");return;}
-      var docId=v.gameId+"_"+v.game.replace(/\s/g,"");
-      db.collection("verifications").doc(docId).update({status:"verified",verifiedName:name,verifiedBy:adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin",verifiedAt:new Date().toISOString()});
-      toast("Verified: "+name,"ok");
-      sendTgNotify("<b>✅ ID Verified</b>\n"+v.game+" • "+v.gameId+"\nName: "+name+"\nBy: "+(v.pcaId||v.authUser));
-      VERI.splice(i,1);rVerify();
-    }
-  });
-}
-function rejectId(i){
-  var v=VERI[i];if(!v)return;
-  var docId=v.gameId+"_"+v.game.replace(/\s/g,"");
-  db.collection("verifications").doc(docId).update({status:"rejected",verifiedBy:adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin"});
-  toast("Rejected","er");
-  VERI.splice(i,1);rVerify();
 }
 // ═══ WARNING DIALOG ═══
 var _wCb=null;
@@ -626,8 +665,6 @@ function go(p){
   // orders/dash — O array ရှိနှင့်ပြီဆိုရင် ချက်ချင်း render၊ content/pays — fresh fetch
   if(p==="orders"||p==="dash"||p==="users"){
     ({dash:rDash,orders:rOrd,users:rUsers})[p]();
-  } else if(p==="verify"){
-    rVerify();
   } else if(p==="register"){
     rRegister();
   } else {
@@ -828,42 +865,6 @@ function vReg(fbId){
   document.getElementById("mo").classList.add("on");
 }
 
-function rVerify(){
-  var bdg=document.getElementById("vBdg");
-  if(bdg){bdg.textContent=VERI.length;bdg.style.display=VERI.length?"flex":"none";}
-  var h='<div class="cw"><div class="cw-h"><div class="cw-t" style="color:var(--yw)">'
-    +'<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--yw);fill:none;stroke-width:1.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
-    +'ID Verify <span style="font-weight:600;color:var(--tx3)">('+VERI.length+')</span></div>'
-    +'<span id="veriLive" style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--gn);font-weight:700"><span style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block;box-shadow:0 0 6px var(--gn)"></span>LIVE</span>'
-    +'</div>';
-  if(!VERI.length){
-    h+='<div class="emp" style="padding:40px 20px;text-align:center">'
-      +'<svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--tx3);fill:none;stroke-width:1.3;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>'
-      +'<div style="font-size:12px;font-weight:700;color:var(--tx3)">No pending verifications</div>'
-      +'</div>';
-  } else {
-    h+=VERI.map(function(v,i){
-      return'<div class="li" style="padding:14px 16px">'
-        +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--yw),#f59e0b);display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-        +'<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h4M8 13h6M8 17h3"/></svg></div>'
-        +'<div class="li-b">'
-          +'<div class="li-t" style="font-size:13px;font-weight:800">'+v.game+'</div>'
-          +'<div style="font-size:11px;color:var(--tx2);margin-top:2px;font-weight:600">ID: <span style="color:var(--ac);font-family:var(--m)">'+v.gameId+'</span>'+(v.serverId?' <span style="color:var(--tx3)">• Server '+v.serverId+'</span>':'')+'</div>'
-          +'<div style="font-size:10px;color:var(--tx3);margin-top:2px">'+(v.pcaId||v.authUser||"Guest")+' • '+fd(v.timestamp)+'</div>'
-        +'</div>'
-        +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
-          +'<button style="padding:7px 14px;border-radius:9px;background:var(--gn);color:#fff;border:none;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:4px" onclick="verifyId('+i+')">'
-          +'<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>Verify</button>'
-          +'<button style="padding:7px 14px;border-radius:9px;background:none;color:var(--rd);border:1.5px solid var(--rd);font-size:11px;font-weight:800;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:4px" onclick="rejectId('+i+')">'
-          +'<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Reject</button>'
-        +'</div>'
-      +'</div>';
-    }).join("");
-  }
-  h+='</div>';
-  document.getElementById("pg-verify").innerHTML=h;
-}
-var _veriUnsub=null;
 function subUsers(){
   if(_usersUnsub)_usersUnsub();
   if(!fb||!db)return;
@@ -874,22 +875,6 @@ function subUsers(){
     if(cp==="dash")rDash();
   },function(){USERS=[];});
 }
-function subVerify(){
-  if(_veriUnsub)_veriUnsub();
-  if(!fb||!db)return;
-  _veriUnsub=db.collection("verifications").where("status","==","pending").onSnapshot(function(s){
-    var prev=VERI.length;
-    VERI=[];s.forEach(function(d){VERI.push(d.data());});
-    var bdg=document.getElementById("vBdg");
-    if(bdg){bdg.textContent=VERI.length;bdg.style.display=VERI.length?"flex":"none";}
-    if(VERI.length>prev)toast("New ID verification!","in");
-    rVerify();
-    // LIVE pulse
-    var live=document.getElementById("veriLive");
-    if(live){live.style.opacity="1";setTimeout(function(){if(live)live.style.opacity=".5";},800);}
-  },function(){VERI=[];rVerify();});
-}
-function refreshVeri(){subVerify();}
 function delOrder(i){
   adWarn({title:"Delete Order?",msg:"Permanently delete this order? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){
     var o=O[i];
@@ -1506,29 +1491,56 @@ function saveGameOrder(){
   db.collection("config").doc("store").set({gameOrder:order},{merge:true});
   toast("Game order updated","ok");
 }
+var _editTabs=[];var _editTabIdx=0;
 function eG(i){
-  var g=i>=0?G[i]:{n:"",e:"🎮",c:"#1d4ed8",cur:"",ci:"💎",pl:"Mobile",img:"",bannerImg:"",pr:[{d:0,p:0}],regions:[],showSid:false};
+  var g=i>=0?G[i]:{n:"",e:"🎮",c:"#1d4ed8",cur:"",ci:"💎",pl:"Mobile",img:"",bannerImg:"",pr:[{d:0,p:0}],tabs:[],regions:[],showSid:false};
+  _editTabs=(g.tabs&&g.tabs.length)?JSON.parse(JSON.stringify(g.tabs)):[{name:"Default",pr:JSON.parse(JSON.stringify(g.pr||[]))}];
+  _editTabIdx=0;
   document.getElementById("mTi").textContent=i>=0?"Edit Game":"Add Game";
   var cardIp=g.img?'<img src="'+g.img+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Card Image</span>';
   var bnrIp=g.bannerImg?'<img src="'+g.bannerImg+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>':'<svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:var(--tx3);fill:none"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Banner Image</span>';
   document.getElementById("mBd").innerHTML=
     '<div class="fg"><div style="display:flex;gap:10px;align-items:flex-start">'
     +'<div style="flex:1;min-width:0"><label>Card Image (1:1)</label>'
-    +'<div class="img-up" style="width:100%;height:0;padding-bottom:100%;position:relative" onclick="uploadImg(\'gImg\',this)">'+cardIp+'</div>'
+    +'<div class="img-up" style="width:100%;height:120px;position:relative" onclick="uploadImg(\'gImg\',this)">'+cardIp+'</div>'
     +'<input type="hidden" id="gImg" value="'+(g.img||"")+'"/></div>'
     +'<div style="flex:1;min-width:0"><label>Banner (16:9)</label>'
-    +'<div class="img-up" style="width:100%;height:0;padding-bottom:56.25%;position:relative" onclick="uploadImg(\'gBnr\',this)">'+bnrIp+'</div>'
+    +'<div class="img-up" style="width:100%;height:120px;position:relative" onclick="uploadImg(\'gBnr\',this)">'+bnrIp+'</div>'
     +'<input type="hidden" id="gBnr" value="'+(g.bannerImg||"")+'"/></div>'
     +'</div></div>'
     +'<div class="fg"><label>Name</label><div style="display:flex;gap:6px"><input id="gN" value="'+g.n+'" style="flex:1"/><button type="button" class="bt pr" style="white-space:nowrap" onclick="openG2BulkPicker()">🔍 G2Bulk</button></div><input type="hidden" id="gG2bCode" value="'+(g.g2bulkCode||"")+'"/></div>'
     +'<div class="fg"><label>Currency Name</label><input id="gCr" value="'+g.cur+'" placeholder="e.g. Diamonds, UC, Gems"/></div>'
     +'<div class="fg"><div class="rw"><div style="display:none"><label>Color</label><input id="gCo" type="color" value="'+(g.c||'#1d4ed8')+'" style="height:40px;padding:2px"/></div><div><label>Platform</label><select id="gPl"><option'+(g.pl==="Mobile"?" selected":"")+'>Mobile</option><option'+(g.pl==="PC"?" selected":"")+'>PC</option><option'+(g.pl==="Cross"?" selected":"")+'>Cross</option></select></div></div></div>'
     +'<div class="fg"><div style="display:flex;align-items:center;justify-content:space-between"><label style="margin:0">Show Server ID</label><label class="tgl"><input type="checkbox" id="gSid" '+(g.showSid?"checked":"")+'/><span class="ts"></span></label></div></div>'
-    +'<div class="fg"><label>Packages</label><div class="pkmk">Markup <input id="pkMarkup" value="4" inputmode="decimal">% <button type="button" class="bt pr" onclick="applyMarkupAll()">Apply to all</button></div><div class="pkl" id="pkL">'
-    +g.pr.map(function(p){return pkRowHtml(p.d,p.c,p.p);}).join("")
-    +'</div><button class="pka" onclick="addPk()">+ Package</button></div>';
+    +'<div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><label style="margin:0">Packages</label><button type="button" class="bt gn" onclick="updateG2BulkPrices()">🔄 Update Price</button></div><div id="tabTabsRow"></div><div class="pkmk">Markup <input id="pkMarkup" value="4" inputmode="decimal">% <button type="button" class="bt pr" onclick="applyMarkupAll()">Apply to all</button></div><div class="pkl" id="pkL"></div><button class="pka" onclick="addPk()">+ Package</button></div>';
   document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sG('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dG('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';
   document.getElementById("mo").classList.add("on");
+  renderTabBar();renderPkRows();
+}
+function renderTabBar(){
+  var row=document.getElementById("tabTabsRow");if(!row)return;
+  var h='<div style="display:flex;gap:6px;overflow-x:auto;margin-top:6px;margin-bottom:8px;padding-bottom:2px">';
+  _editTabs.forEach(function(t,i){h+='<button type="button" class="bt'+(i===_editTabIdx?" pr":"")+'" style="white-space:nowrap;flex-shrink:0" onclick="switchEditTab('+i+')">'+(t.name||("Tab "+(i+1)))+'</button>';});
+  h+='<button type="button" class="bt bl" style="white-space:nowrap;flex-shrink:0" onclick="addEditTab()">+ Tab</button></div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:10px"><input id="tabNameInp" value="'+(_editTabs[_editTabIdx].name||"")+'" placeholder="Tab name" oninput="renameEditTab(this.value)" style="flex:1;padding:9px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-family:var(--f);color:var(--tx);outline:none">'+(_editTabs.length>1?'<button type="button" class="pkrm" onclick="delEditTab()">×</button>':"")+'</div>';
+  row.innerHTML=h;
+}
+function renderPkRows(){
+  var l=document.getElementById("pkL");if(!l)return;
+  l.innerHTML=(_editTabs[_editTabIdx].pr||[]).map(function(p){return pkRowHtml(p.d,p.c,p.p);}).join("");
+}
+function syncCurrentTabRows(){
+  var arr=[];
+  document.querySelectorAll(".pkr").forEach(function(row){var d=row.querySelector(".pkd").value,c=row.querySelector(".pkc").value,p=row.querySelector(".pkp").value;if(d&&p)arr.push({d:d,c:parseInt(c)||0,p:parseInt(p)||0});});
+  if(_editTabs[_editTabIdx])_editTabs[_editTabIdx].pr=arr;
+}
+function switchEditTab(i){syncCurrentTabRows();_editTabIdx=i;renderTabBar();renderPkRows();}
+function addEditTab(){syncCurrentTabRows();_editTabs.push({name:"Tab "+(_editTabs.length+1),pr:[]});_editTabIdx=_editTabs.length-1;renderTabBar();renderPkRows();}
+function delEditTab(){if(_editTabs.length<=1)return;_editTabs.splice(_editTabIdx,1);_editTabIdx=Math.max(0,_editTabIdx-1);renderTabBar();renderPkRows();}
+function renameEditTab(v){
+  _editTabs[_editTabIdx].name=v;
+  var pills=document.querySelectorAll("#tabTabsRow .bt");
+  if(pills[_editTabIdx])pills[_editTabIdx].textContent=v||("Tab "+(_editTabIdx+1));
 }
 function promptImg(){uploadImg("gImg",document.querySelector(".img-up"));}
 function pkPct(cost,price){cost=parseFloat(cost)||0;price=parseFloat(price)||0;var pct=cost>0?((price-cost)/cost*100):0;var cls=pct>0?"pos":(pct<0?"neg":"zero");return{cls:cls,txt:(pct>0?"+":"")+pct.toFixed(1)+"%"};}
@@ -1538,7 +1550,7 @@ function roundNice(v){if(v<10000)return Math.round(v/100)*100;if(v<50000)return 
 function applyMarkupAll(){var mk=parseFloat(document.getElementById("pkMarkup").value)||0;document.querySelectorAll(".pkr").forEach(function(row){var costEl=row.querySelector(".pkc"),priceEl=row.querySelector(".pkp");var cost=parseFloat(costEl.value)||0;if(cost<=0)return;priceEl.value=roundNice(cost*(1+mk/100));pkRecalc(priceEl);});toast("Markup applied","ok");}
 function addReg(){document.getElementById("regL").insertAdjacentHTML("beforeend",'<div class="pkr" style="flex-direction:row;flex-wrap:wrap;margin-bottom:4px"><input placeholder="Name" class="rgN" style="flex:1"><input placeholder="Flag" class="rgF" style="width:50px"><input placeholder="Tap for image" class="rgI" style="flex:2;cursor:pointer" onclick="upField(this)" readonly><button class="pkrm" onclick="this.parentElement.remove()">×</button></div>');}
 function addPk(){document.getElementById("pkL").insertAdjacentHTML("beforeend",pkRowHtml("","",""));}
-function sG(i){var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg")?document.getElementById("gImg").value:"",bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",g2bulkCode:document.getElementById("gG2bCode")?document.getElementById("gG2bCode").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,regions:[],pr:[]};document.querySelectorAll(".pkr").forEach(function(row){var d=row.querySelector(".pkd").value,c=row.querySelector(".pkc").value,p=row.querySelector(".pkp").value;if(d&&p)o.pr.push({d:d,c:parseInt(c)||0,p:parseInt(p)||0});});if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb){var fsDoc={n:o.n,e:o.e,c:o.c,cur:o.cur,ci:o.ci,pl:o.pl,img:o.img,bannerImg:o.bannerImg,g2bulkCode:o.g2bulkCode,showSid:o.showSid};if(o.pr&&o.pr.length>0)fsDoc.pr=o.pr;db.collection("games").doc(o.n).set(fsDoc,{merge:true});}toast("Game saved","ok");rContent();cM();}
+function sG(i){syncCurrentTabRows();var o={n:document.getElementById("gN").value,e:"🎮",c:document.getElementById("gCo").value,cur:document.getElementById("gCr").value,ci:"💎",pl:document.getElementById("gPl").value,img:document.getElementById("gImg")?document.getElementById("gImg").value:"",bannerImg:document.getElementById("gBnr")?document.getElementById("gBnr").value:"",g2bulkCode:document.getElementById("gG2bCode")?document.getElementById("gG2bCode").value:"",showSid:document.getElementById("gSid")?document.getElementById("gSid").checked:false,regions:[]};o.tabs=_editTabs.map(function(t){return{name:t.name||"Tab",pr:t.pr||[]};});o.pr=(o.tabs[0]&&o.tabs[0].pr)||[];if(!o.n){toast("Name required","er");return;}if(i>=0)G[i]=o;else G.push(o);if(fb){var fsDoc={n:o.n,e:o.e,c:o.c,cur:o.cur,ci:o.ci,pl:o.pl,img:o.img,bannerImg:o.bannerImg,g2bulkCode:o.g2bulkCode,showSid:o.showSid,tabs:o.tabs};if(o.pr&&o.pr.length>0)fsDoc.pr=o.pr;db.collection("games").doc(o.n).set(fsDoc,{merge:true});}toast("Game saved","ok");rContent();cM();}
 function dG(i){adWarn({title:"Delete Game?",msg:"Delete \""+G[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("games").doc(G[i].n).delete();G.splice(i,1);toast("Deleted","ok");rContent();}});}
 var evAdmFilter="all";
 function reT(){
@@ -2625,7 +2637,6 @@ function init(){
   loadG2BulkConfig(); // G2Bulk API Key/Rate ကို Firebase မှ load
   fetchAll(function(){rDash();}); // parallel get() — ပြီးမှ render
   subOrders(); // orders သည် real-time ဆက်ထား (new order alert)
-  subVerify(); // verifications real-time listener
   subUsers();  // users real-time listener (registered + guest)
   subRegistrations(); // pre-registrations real-time listener
   schedMidnightRefresh(); // midnight auto-refresh စတင်
