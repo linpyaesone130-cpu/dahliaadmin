@@ -361,6 +361,51 @@ var VERI=[];
 var USERS=[]; // Firebase users collection real-time data
 var _usersUnsub=null;
 var curUnit="MMK",RATES={USD:0.00048,THB:0.017},SYMS={USD:"$",THB:"฿"};
+// G2Bulk (wholesale game top-up API) config
+var G2BULK_KEY="",G2BULK_RATE=4500,G2BULK_BALANCE=null,G2BULK_GAMES_LIST=[];
+function loadG2BulkConfig(){
+  if(!fb||!db)return;
+  db.collection("settings").doc("g2bulk").get().then(function(d){
+    if(d.exists){
+      G2BULK_KEY=d.data().apiKey||"";
+      G2BULK_RATE=d.data().rate||4500;
+    }
+    if(cp==="set")rSet();
+  }).catch(function(){});
+}
+function saveG2BulkKey(){
+  var k=document.getElementById("g2bKey").value.trim();
+  var r=parseFloat(document.getElementById("g2bRate").value)||4500;
+  G2BULK_KEY=k;G2BULK_RATE=r;
+  if(fb)db.collection("settings").doc("g2bulk").set({apiKey:k,rate:r},{merge:true});
+  toast("G2Bulk Key သိမ်းပြီး","ok");
+  verifyG2BulkKey();
+}
+async function verifyG2BulkKey(){
+  if(!G2BULK_KEY){toast("API Key ဖြည့်ပါ","er");return;}
+  var el=document.getElementById("g2bStatus");
+  if(el)el.textContent="Checking...";
+  try{
+    var res=await fetch("https://api.g2bulk.com/api/v2",{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:"key="+encodeURIComponent(G2BULK_KEY)+"&action=balance"
+    });
+    var data=await res.json();
+    if(data&&(data.balance!==undefined)){
+      G2BULK_BALANCE=data.balance;
+      if(el)el.innerHTML='<span style="color:var(--gn);font-weight:800">✓ Connected — Balance: '+data.balance+' '+(data.currency||"USD")+'</span>';
+      toast("G2Bulk Key အလုပ်လုပ်ပါတယ်","ok");
+    }else{
+      if(el)el.innerHTML='<span style="color:var(--rd);font-weight:800">✗ '+(data&&data.error?data.error:"Invalid response")+'</span>';
+      toast("G2Bulk Key စစ်ဆေးမှု မအောင်မြင်ပါ","er");
+    }
+    rSet();
+  }catch(e){
+    if(el)el.innerHTML='<span style="color:var(--rd);font-weight:800">✗ '+e.message+'</span>';
+    toast("G2Bulk connection error","er");
+  }
+}
 // Verify/Reject ID
 function verifyId(i){
   var v=VERI[i];if(!v)return;
@@ -461,7 +506,7 @@ function setCur(c){curUnit=c;document.querySelectorAll(".cur-b").forEach(functio
 
 function rDash(){
   var t=O.length,pe=O.filter(function(o){return o.status==="pending"}).length,su=O.filter(function(o){return o.status==="confirmed"||o.status==="success"}).length,fa=O.filter(function(o){return o.status==="failed"}).length,rv=0;O.forEach(function(o){if(o.status==="confirmed"||o.status==="success")rv+=o.price;});
-var h='<div class="grid2"><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="lb">Orders</div><div class="vl">'+t+'</div></div><div class="scard"><div class="ic" style="background:rgba(240,165,0,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--yw)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lb">Pending</div><div class="vl" style="color:var(--yw)">'+pe+'</div></div><div class="scard"><div class="ic" style="background:rgba(0,176,92,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--gn)"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="lb">Done</div><div class="vl" style="color:var(--gn)">'+su+'</div></div><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lb">Revenue</div><div class="vl" style="color:var(--ac);font-size:14px">'+fmtP(rv)+'</div></div></div>';
+var h='<div class="grid2"><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="lb">Orders</div><div class="vl">'+t+'</div></div><div class="scard"><div class="ic" style="background:rgba(240,165,0,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--yw)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lb">Pending</div><div class="vl" style="color:var(--yw)">'+pe+'</div></div><div class="scard"><div class="ic" style="background:rgba(0,176,92,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--gn)"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="lb">Done</div><div class="vl" style="color:var(--gn)">'+su+'</div></div><div class="scard"><div class="ic" style="background:rgba(44,165,224,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--ac)"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lb">Revenue</div><div class="vl" style="color:var(--ac);font-size:14px">'+fmtP(rv)+'</div></div><div class="scard" onclick="go(\'users\')" style="cursor:pointer"><div class="ic" style="background:rgba(123,104,238,.12)"><svg viewBox="0 0 24 24" style="stroke:var(--pur)"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="lb">Users</div><div class="vl" style="color:var(--pur)">'+USERS.length+'</div></div></div>';
 // Calendar history button
 h+='<button onclick="calOpen()" style="width:100%;margin-bottom:12px;padding:12px 16px;border-radius:14px;border:1.5px solid var(--bd);background:var(--sf);cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--tx2);transition:all .15s"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--ac);fill:none;stroke-width:1.7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><rect x="8" y="14" width="3" height="3" rx="1" style="fill:var(--ac)"/></svg>History Calendar<span style="margin-left:auto;font-size:9px;color:var(--tx3);font-weight:600">Tap date to see orders</span></button>';
 var sp=t?Math.round(su/t*100):0,pp=t?Math.round(pe/t*100):0,fp=t?Math.round(fa/t*100):0;
@@ -477,7 +522,7 @@ h+=O.slice(0,5).map(function(o){
 }).join("")||'<div class="emp">No orders yet</div>';
 h+='</div>';
 // Revenue chart - last 7 days
-var dayRev={};O.forEach(function(o){if(o.status==="success"&&o.timestamp){var d=new Date(o.timestamp);var k=d.toLocaleDateString("en-US",{month:"short",day:"numeric"});dayRev[k]=(dayRev[k]||0)+o.price;}});
+var dayRev={};O.forEach(function(o){if((o.status==="confirmed"||o.status==="success")&&o.timestamp){var d=new Date(o.timestamp);var k=d.toLocaleDateString("en-US",{month:"short",day:"numeric"});dayRev[k]=(dayRev[k]||0)+o.price;}});
 var days=Object.keys(dayRev).slice(-7);var vals=days.map(function(d){return dayRev[d];});var mx=Math.max.apply(null,vals)||1;
 if(days.length){h+='<div class="st-bars" style="padding:14px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:4px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:var(--ac);fill:none"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Revenue (7 days)</div><div style="display:flex;align-items:flex-end;gap:4px;height:80px">'+days.map(function(d,i){var pct=Math.max(Math.round(vals[i]/mx*100),5);return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:100%;border-radius:4px 4px 0 0;background:var(--ac);height:'+pct+'%;min-height:3px;transition:height .5s"></div><span style="font-size:7px;color:var(--tx3);font-weight:700">'+d.split(" ")[1]+'</span></div>';}).join("")+'</div><div style="text-align:center;margin-top:6px;font-size:10px;color:var(--tx3)">Total: <span style="color:var(--ac);font-weight:900">'+fmtP(vals.reduce(function(a,b){return a+b},0))+'</span></div></div>';}
 
@@ -688,6 +733,7 @@ function subUsers(){
     USERS=[];
     s.forEach(function(d){var u=d.data();u._docId=d.id;USERS.push(u);});
     if(cp==="users")rUsers();
+    if(cp==="dash")rDash();
   },function(){USERS=[];});
 }
 function subVerify(){
@@ -1359,7 +1405,7 @@ function rpT(){
 function ePrm(i){var p=i>=0?PRM[i]:{t:"",d:"",x:"",exp:"",img:"",caption:"",game:"",gameId:"",gameServer:"",gameRank:"",gallery:[]};document.getElementById("mTi").textContent=i>=0?"Edit Account":"Add Account";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add image</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Image</label><div class="img-up" onclick="uploadImg(&quot;prmImg&quot;,this)">'+ip+'</div><input type="hidden" id="prmImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Title</label><input id="prmT" value="'+p.t+'"/></div><div class="fg"><label>Description</label><textarea id="prmD">'+p.d+'</textarea></div><div class="fg"><label>Caption</label><input id="prmCap" value="'+(p.caption||"")+'" placeholder="Short caption text"/></div><div class="fg"><div class="rw"><div><label>Discount</label><input id="prmX" value="'+p.x+'"/></div><div><label>Expiry</label><input id="prmE" value="'+p.exp+'"/></div></div></div><div style="font-size:10px;font-weight:800;color:var(--ac);text-transform:uppercase;margin:8px 0 6px">Game Account Info</div><div class="fg"><label>Game</label><input id="prmGm" value="'+(p.game||"")+'" placeholder="e.g. Mobile Legends"/></div><div class="fg"><div class="rw"><div><label>Game ID</label><input id="prmGid" value="'+(p.gameId||"")+'"/></div><div><label>Server</label><input id="prmGsv" value="'+(p.gameServer||"")+'"/></div></div></div><div class="fg"><label>Rank</label><input id="prmGrk" value="'+(p.gameRank||"")+'" placeholder="e.g. Mythic Glory"/></div><div class="fg"><label>Gallery Images (URLs ကို တစ်ကြောင်းချင်း)</label><textarea id="prmGal" style="min-height:70px;font-family:var(--m);font-size:11px" placeholder="https://example.com/img1.jpg">'+(Array.isArray(p.gallery)?p.gallery.join("\n"):(p.gallery||""))+'</textarea></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPrm('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPrm('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPrm(i){var o={t:document.getElementById("prmT").value,d:document.getElementById("prmD").value,x:document.getElementById("prmX").value,exp:document.getElementById("prmE").value,img:document.getElementById("prmImg").value,caption:document.getElementById("prmCap").value,game:document.getElementById("prmGm").value,gameId:document.getElementById("prmGid").value,gameServer:document.getElementById("prmGsv").value,gameRank:document.getElementById("prmGrk").value,gallery:document.getElementById("prmGal").value.split("\n").map(function(s){return s.trim()}).filter(Boolean)};if(!o.t){toast("Title required","er");return;}if(i>=0)PRM[i]=o;else PRM.push(o);if(fb)db.collection("promos").doc(o.t).set(o);toast("Saved","ok");rContent();cM();}
 function dPrm(i){adWarn({title:"Delete Account?",msg:"Delete \""+PRM[i].t+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("promos").doc(PRM[i].t).delete();PRM.splice(i,1);toast("Deleted","ok");rContent();}});}
-function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&o.status==="success"}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
+function rPay(){var h='<div class="cw"><div class="cw-h"><div class="cw-t">Payments</div><button class="bt pr" onclick="ePy(-1)">+ Add</button></div>';h+=P.map(function(p,i){var rv=O.filter(function(o){return o.payment===p.n&&(o.status==="confirmed"||o.status==="success")}).reduce(function(s,o){return s+o.price},0);var ic=p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':p.ic;return'<div class="li" onclick="ePy('+i+')"><div class="li-i" style="background:'+p.col+';color:#fff;font-weight:900;font-size:14px;overflow:hidden">'+ic+'</div><div class="li-b"><div class="li-t">'+p.n+'</div><div class="li-s">'+p.hd+' • '+p.ph+'</div></div><div class="li-r"><div class="li-v">'+fmtP(rv)+'</div></div></div>'}).join("")||'<div class="emp">No payments</div>';h+='</div>';document.getElementById("pg-pays").innerHTML=h;}
 function ePy(i){var p=i>=0?P[i]:{n:"",ic:"$",col:"#1d4ed8",hd:"",ph:"",img:"",qr:""};document.getElementById("mTi").textContent=i>=0?"Edit Payment":"Add Payment";var ip=p.img?'<img src="'+p.img+'"/>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Add logo</span>';document.getElementById("mBd").innerHTML='<div class="fg"><label>Logo Image</label><div class="img-up" onclick="uploadImg(&quot;pyImg&quot;,this)">'+ip+'</div><input type="hidden" id="pyImg" value="'+(p.img||"")+'"/></div><div class="fg"><label>Name</label><input id="pyN" value="'+p.n+'"/></div><div class="fg"><label>Account</label><input id="pyH" value="'+p.hd+'"/></div><div class="fg"><label>Phone</label><input id="pyP" value="'+p.ph+'" type="tel"/></div><div class="fg"><label>QR Code</label><div class="img-up" style="height:70px" onclick="uploadImg(&quot;pyQ&quot;,this)">'+(p.qr?'<img src="'+p.qr+'"/>':'<span style="font-size:10px">Tap to upload QR</span>')+'</div><input type="hidden" id="pyQ" value="'+(p.qr||"")+'"/></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" onclick="sPy('+i+')">Save</button>'+(i>=0?'<button class="mb dl" onclick="dPy('+i+');cM()">Delete</button>':'')+'<button class="mb cn" onclick="cM()">Cancel</button>';document.getElementById("mo").classList.add("on");}
 function sPy(i){var p=i>=0?P[i]:{ic:"$",col:"#1d4ed8"};var o={n:document.getElementById("pyN").value,ic:p.ic||"$",col:p.col||"#1d4ed8",hd:document.getElementById("pyH").value,ph:document.getElementById("pyP").value,img:document.getElementById("pyImg").value,qr:document.getElementById("pyQ")?document.getElementById("pyQ").value:""};if(!o.n){toast("Required","er");return;}if(i>=0)P[i]=o;else P.push(o);if(fb)db.collection("payments").doc(o.n).set(o);toast("Saved","ok");rPay();cM();}
 function dPy(i){adWarn({title:"Delete Payment?",msg:"Delete \""+P[i].n+"\"? This cannot be undone.",okLabel:"Delete",type:"red",icon:"del",onOk:function(){if(fb)db.collection("payments").doc(P[i].n).delete();P.splice(i,1);toast("Deleted","ok");rPay();}});}
@@ -1600,7 +1646,7 @@ function viewUser(email){
   var uOrders=O.filter(function(o){
     return isGuest?(!o.authUser||o.authUser===""):o.authUser===email;
   });
-  var sp=0;uOrders.forEach(function(o){if(o.status==="success")sp+=o.price;});
+  var sp=0;uOrders.forEach(function(o){if(o.status==="confirmed"||o.status==="success")sp+=o.price;});
   var did=uOrders.length&&uOrders[0].pcaId?uOrders[0].pcaId:"—";
   var nm=isGuest?"Guest (Not Logged In)":(uOrders.length&&uOrders[0].authName?uOrders[0].authName:"");
   var gameIds=[];uOrders.forEach(function(o){if(o.userId&&gameIds.indexOf(o.game+":"+o.userId)===-1)gameIds.push(o.game+":"+o.userId);});
@@ -1627,14 +1673,14 @@ function viewUser(email){
     h+='<div style="font-size:9px;font-weight:800;color:var(--blu);text-transform:uppercase;margin:10px 0 6px">Device</div>';[{l:"Model",v:u.deviceModel||"—"},{l:"OS",v:u.device||"—"},{l:"Browser",v:u.browser||"—"},{l:"Screen",v:u.screenSize||"—"},{l:"Language",v:u.language||"—"}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});}
     if(gameIds.length){h+='<div style="font-size:9px;font-weight:800;color:var(--gn);text-transform:uppercase;margin:10px 0 6px">Game IDs</div>';gameIds.forEach(function(g){var p=g.split(":");h+='<div class="mr"><span class="ml">'+p[0]+'</span><span class="mv" style="font-family:var(--m)">'+p[1]+'</span></div>';});}
     h+='<div style="font-size:9px;font-weight:800;color:var(--yw);text-transform:uppercase;margin:10px 0 6px">Stats</div><div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div><div class="mr"><span class="ml">Spent</span><span class="mv" style="color:var(--ac);font-weight:900">'+fmtP(sp)+'</span></div>';
-    if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=o.status==="success"?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
+    if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=(o.status==="confirmed"||o.status==="success")?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
     document.getElementById("mBd").innerHTML=h;document.getElementById("mFt").innerHTML='<button class="mb sv" style="background:var(--ac)" onclick="cM();sendUserNotif(\''+email+'\')"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;vertical-align:-1px"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> Notify</button><button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");
   }).catch(function(){document.getElementById("mBd").innerHTML=h+'<div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div>';document.getElementById("mFt").innerHTML='<button class="mb sv" style="background:var(--ac)" onclick="cM();sendUserNotif(\''+email+'\')"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;vertical-align:-1px"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> Notify</button><button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");});}
   else {
     // Guest: no Firebase account, show orders directly
     if(gameIds.length){h+='<div style="font-size:9px;font-weight:800;color:var(--gn);text-transform:uppercase;margin:10px 0 6px">Game IDs</div>';gameIds.forEach(function(g){var p=g.split(":");h+='<div class="mr"><span class="ml">'+p[0]+'</span><span class="mv" style="font-family:var(--m)">'+p[1]+'</span></div>';});}
     h+='<div style="font-size:9px;font-weight:800;color:var(--yw);text-transform:uppercase;margin:10px 0 6px">Stats</div><div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div><div class="mr"><span class="ml">Spent</span><span class="mv" style="color:var(--ac);font-weight:900">'+(sp>0?fmtP(sp):"—")+'</span></div>';
-    if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=o.status==="success"?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
+    if(uOrders.length){h+='<div style="font-size:9px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin:10px 0 6px">Recent Orders</div>';uOrders.slice(0,5).forEach(function(o){var bc=(o.status==="confirmed"||o.status==="success")?"su":o.status==="pending"?"pe":"fa";h+='<div style="display:flex;align-items:center;gap:4px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.03)"><span style="font-size:10px;font-weight:700">'+o.game+'</span><span style="flex:1;font-size:9px;color:var(--tx3)">'+o.currencyIcon+o.amount+'</span><span class="bg '+bc+'" style="font-size:7px">'+o.status+'</span></div>';});}
     document.getElementById("mBd").innerHTML=h;document.getElementById("mFt").innerHTML='<button class="mb cn" onclick="cM()">Close</button>';document.getElementById("mo").classList.add("on");
   }
 }
@@ -1715,7 +1761,7 @@ h+='<div class="stc"><div class="stc-t" style="color:var(--rd)"><svg viewBox="0 
   +'</button>'
   +'<div style="font-size:9px;color:var(--tx3)">User များ App ဖွင့်မနေသည့်တိုင် Inbox ထဲသို့ ရောက်ရှိမည်၊ Red dot ပြမည်</div>'
   +'</div></div>';
-h+='<div class="stc"><div class="stc-t" style="color:var(--blu)">Telegram</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Bot Token</div><input class="sti" value="'+TG_BOT+'" placeholder="123456:ABC..." onchange="TG_BOT=this.value"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Chat ID</div><input class="sti" value="'+TG_CHAT+'" placeholder="-100123..." onchange="TG_CHAT=this.value"/></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="sendTgNotify(\'Test!\');toast(\'Sent\',\'ok\')">Send</button></div></div>';
+h+='<div class="stc"><div class="stc-t" style="color:var(--pur)">G2Bulk API</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">API Key</div><input id="g2bKey" class="sti" type="password" value="'+G2BULK_KEY+'" placeholder="G2Bulk API Key"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">USD → MMK Rate</div><input id="g2bRate" class="sti" type="number" value="'+G2BULK_RATE+'" placeholder="4500"/></div><div class="str"><div class="stl">Save & Verify</div><button class="bt pr" onclick="saveG2BulkKey()">Verify Key</button></div><div class="str"><div id="g2bStatus" style="font-size:11px">'+(G2BULK_KEY?"":'<span style="color:var(--tx3)">Key မထည့်ရသေးပါ</span>')+'</div></div></div><div class="stc"><div class="stc-t" style="color:var(--blu)">Telegram</div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Bot Token</div><input class="sti" value="'+TG_BOT+'" placeholder="123456:ABC..." onchange="TG_BOT=this.value"/></div><div class="str" style="flex-direction:column;align-items:stretch"><div class="stl">Chat ID</div><input class="sti" value="'+TG_CHAT+'" placeholder="-100123..." onchange="TG_CHAT=this.value"/></div><div class="str"><div class="stl">Test</div><button class="bt bl" onclick="sendTgNotify(\'Test!\');toast(\'Sent\',\'ok\')">Send</button></div></div>';
 h+='<div class="stc"><div class="stc-t" style="color:var(--pur)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M9 12l2 2 4-4"/></svg>AI Receipt Verification</div>'
   +'<div class="str" style="flex-direction:column;align-items:stretch">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
@@ -2395,6 +2441,7 @@ function init(){
   document.getElementById("fbTxt").textContent="Connected";
   showLoad(); // spinner ဦးစွာပြ
   loadAIKey(); // AI Key ကို Firebase မှ load (ပြန်ထည့်မနေရအောင်)
+  loadG2BulkConfig(); // G2Bulk API Key/Rate ကို Firebase မှ load
   fetchAll(function(){rDash();}); // parallel get() — ပြီးမှ render
   subOrders(); // orders သည် real-time ဆက်ထား (new order alert)
   subVerify(); // verifications real-time listener
