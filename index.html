@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>PCA Admin Panel</title>
+<title>Kusanagi's Platform Admin Panel</title>
 <meta name="theme-color" content="#0066ff"/><meta name="apple-mobile-web-app-capable" content="yes"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -15,7 +15,7 @@
   --blu:#0066ff;--blu2:#2979ff;
   --gn:#00b05c;--yw:#f0a500;--rd:#e53935;--pur:#7b68ee;
   --grad:linear-gradient(135deg,#0066ff 0%,#2979ff 100%);
-  --r:14px;--f:'Barlow','Inter',system-ui,sans-serif;--m:'JetBrains Mono',monospace;
+  --r:14px;--f:'Inter',system-ui,sans-serif;--m:'Inter',monospace;
   --glass:rgba(255,255,255,.9);--glow:0 0 20px rgba(0,102,255,.2)
 }
 *{margin:0;padding:0;box-sizing:border-box}::-webkit-scrollbar{display:none}
@@ -290,7 +290,7 @@ div[style*="aspect-ratio"] img,.grid-card-img{object-fit:cover;object-position:c
   <div class="hdr">
     <div class="hdr-logo">
       <div class="mark"><svg viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-      <div class="nm"><span>PCA Store</span> Admin</div>
+      <div class="nm"><span>Kusanagi's Platform</span> Admin</div>
     </div>
     <div class="hdr-r">
       <div class="cur-sw">
@@ -396,7 +396,7 @@ async function genTOTP(secret,time){var key=b32decode(secret);var t=Math.floor((
 async function verify2FA(){var ins=document.querySelectorAll(".otp-in");var code="";ins.forEach(function(i){code+=i.value;});if(code.length!==6){document.getElementById("tfaErr").textContent="Enter all 6 digits";return;}document.getElementById("tfaErr").textContent="Verifying...";try{var now=Math.floor(Date.now()/1000);var valid=false;for(var w=-1;w<=1;w++){if(code===await genTOTP(TOTP_SECRET,now+w*30)){valid=true;break;}}if(valid){enterDash();toast("2FA verified","ok");}else{document.getElementById("tfaErr").textContent="Invalid code";ins.forEach(function(i){i.value="";});ins[0].focus();}}catch(e){document.getElementById("tfaErr").textContent="Error";}}
 function genSecret(){var c="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",s="";for(var i=0;i<16;i++)s+=c[Math.floor(Math.random()*32)];return s;}
 
-var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"PCA Store Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"PCA Store — Fastest game top-up in Myanmar",banners:[],tgUsername:""};
+var O=[],G=[],P=[],cp="dash",oF="all",CFG={name:"Kusanagi's Platform Top Up Store",cur:"MMK",autoApprove:false,heroImg:"",heroTitle:"Top Up Instantly.\nPlay Unlimited.",heroSub:"Kusanagi's Platform — Fastest game top-up in Myanmar",banners:[],tgUsername:""};
 var USERS=[]; // Firebase users collection real-time data
 var _usersUnsub=null;
 var curUnit="MMK",RATES={USD:0.00048,THB:0.017},SYMS={USD:"$",THB:"฿"};
@@ -432,9 +432,11 @@ async function fetchG2BulkGamesList(){
       var data=await res.json();
       var list=(data&&(data.games||data.data))||[];
       list.forEach(function(g){
-        var img=g.image_url||g.image||"";
-        if(img&&img.indexOf("http")!==0)img="https://api.g2bulk.com"+img;
-        G2BULK_GAMES_LIST.push({code:g.code||"",name:g.name||"Unknown",image:img});
+        var img=g.image_url||g.image||g.logo||g.icon||g.thumbnail||g.thumb||g.cover_image||g.cover||"";
+        if(img&&img.indexOf("http")!==0)img="https://api.g2bulk.com"+(img.indexOf("/")===0?"":"/")+img;
+        // Route through a proxy so hotlink/referrer/CORS blocks on api.g2bulk.com's image host don't leave the thumbnail blank
+        var proxied=img?"https://images.weserv.nl/?url="+encodeURIComponent(img.replace(/^https?:\/\//,""))+"&w=200&h=200&fit=cover":"";
+        G2BULK_GAMES_LIST.push({code:g.code||"",name:g.name||"Unknown",image:proxied,rawImage:img});
       });
       totalPages=(data&&(data.total_pages||data.last_page))||1;
       page++;
@@ -476,7 +478,7 @@ function renderG2BulkPickerList(){
   el.innerHTML=list.map(function(g){
     var idx=G2BULK_GAMES_LIST.indexOf(g);
     var thumb=g.image
-      ?'<img src="'+g.image+'" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'g2b-noimg\')"/>'
+      ?'<img src="'+g.image+'" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;display:block" onerror="if(this.dataset.fallback!==\'1\'){this.dataset.fallback=\'1\';this.src=\''+(g.rawImage||"").replace(/'/g,"\\'")+'\';}else{this.style.display=\'none\';this.parentNode.classList.add(\'g2b-noimg\');}"/>'
       :'';
     return'<button type="button" class="g2b-gcard" onclick="selectG2BulkGame('+idx+')">'
       +'<div class="g2b-gimg'+(g.image?"":" g2b-noimg")+'">'+thumb+'<span class="g2b-gicon">🎮</span></div>'
@@ -1031,7 +1033,7 @@ function _showAIReviewModal(title, bodyHtml){
 var _REJECT_REASONS=[
   {label:"ငွေပမာဏ မကိုက်ညီပါ",detail:"❌ ငွေပမာဏ မကိုက်ညီပါ — Order တွင် သတ်မှတ်ထားသည့် ပမာဏနှင့် Receipt ထဲ ပမာဏ မတူပါ။"},
   {label:"Receipt မပါ / မရှင်းပါ",detail:"❌ ငွေလွှဲပြေစာ (Receipt) screenshot မပါသောကြောင့် သို့မဟုတ် မရှင်းမလင်းသောကြောင့် Verify လုပ်၍မရပါ။"},
-  {label:"လက်ခံသူ မကိုက်ညီပါ",detail:"❌ ငွေလွှဲ လက်ခံသူ အမည် မကိုက်ညီပါ — PCA Store ၏ ငွေပေးချေသည့် Account သို့ မလွှဲပါ။"},
+  {label:"လက်ခံသူ မကိုက်ညီပါ",detail:"❌ ငွေလွှဲ လက်ခံသူ အမည် မကိုက်ညီပါ — Kusanagi's Platform ၏ ငွေပေးချေသည့် Account သို့ မလွှဲပါ။"},
   {label:"ရက်စွဲ မကိုက်ညီပါ",detail:"❌ ငွေလွှဲ ရက်စွဲ မကိုက်ညီပါ — ယနေ့ ငွေလွှဲပြေစာ ဖြစ်ရမည်။ ဟောင်းသော receipt မသုံးပါနှင့်။"},
   {label:"Duplicate Receipt",detail:"❌ ဤ Receipt ကို အကြိမ်ကြိမ် အသုံးပြုနေသောကြောင့် Reject ဖြစ်ပါသည်။"},
   {label:"ငွေပေးချေမှုနည်းလမ်း မမှန်ပါ",detail:"❌ Order တွင် ရွေးချယ်ထားသော ငွေပေးချေမှုနည်းလမ်းနှင့် Receipt မကိုက်ညီပါ။"},
@@ -1096,11 +1098,11 @@ function _sendRejectWithReason(i){
 var _THANK_YOU_MSGS=[
   "✅ Order confirm ဖြစ်ပါပြီ! ကျေးဇူးတင်ပါသည် 🙏",
   "🎉 ငွေလွှဲပြေစာ စစ်ဆေးပြီးပါပြီ — Diamond ထည့်သွင်းပေးနေပါသည်! ကျေးဇူးတင်ပါသည်",
-  "💎 Top-up ပြုလုပ်ပြီးပါပြီ! PCA Store ကို ယုံကြည်အားပေးသည့်အတွက် ကျေးဇူးတင်ပါသည် ❤️",
+  "💎 Top-up ပြုလုပ်ပြီးပါပြီ! Kusanagi's Platform ကို ယုံကြည်အားပေးသည့်အတွက် ကျေးဇူးတင်ပါသည် ❤️",
   "⚡ Order ကို လိုက်ကြော်ထည့်ပေးလိုက်ပါပြီ! နောက်လည်း ဝင်ရောက်ဖြည့်ပေးပါ 😊",
   "🏆 Diamond ထည့်ပြီးပါပြီ! ကစားပွဲမှာ ကောင်းကောင်းကစားပါ ✨",
   "🎮 Top-up အောင်မြင်ပြီ! ကျေးဇူးတင်ပါသည် — နောက်ထပ်ကူညီနိုင်ရင် ပြန်ဝင်လာပါ 🤝",
-  "✨ Order process ပြုလုပ်ပြီးပါပြီ! PCA Store ကို ထောက်ပံ့ပေးသည့်အတွက် အများကြီးကျေးဇူးတင်ပါသည် 💙"
+  "✨ Order process ပြုလုပ်ပြီးပါပြီ! Kusanagi's Platform ကို ထောက်ပံ့ပေးသည့်အတွက် အများကြီးကျေးဇူးတင်ပါသည် 💙"
 ];
 
 function _doConfirm(i){
@@ -1862,7 +1864,7 @@ function viewUser(email){
   var regBadge=userReg?'<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;background:rgba(0,176,92,.1);color:var(--gn);font-size:9px;font-weight:800;border:1px solid rgba(0,176,92,.2);margin-top:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--gn);box-shadow:0 0 4px var(--gn)"></span>Registered</span>':'';
   var h=avatarHtml+'<div style="text-align:center;margin-bottom:12px"><div style="font-size:20px;font-weight:900;color:var(--ac)">'+did+'</div><div style="font-size:13px;font-weight:700;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px">'+(nm||displayEmail.split("@")[0])+regBadge+'</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">'+displayEmail+'</div></div>';
   if(fb&&db&&!isGuest){db.collection("users").doc(email).get().then(function(d){
-    if(d.exists){var u=d.data();h+='<div style="font-size:9px;font-weight:800;color:var(--ac);text-transform:uppercase;margin-bottom:6px">Account</div>';[{l:"PCA Store ID",v:u.pcaId||did},{l:"Login",v:u.loginMethod||"—"},{l:"Joined",v:fd(u.joined)},{l:"Last Seen",v:fd(u.lastSeen)}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});
+    if(d.exists){var u=d.data();h+='<div style="font-size:9px;font-weight:800;color:var(--ac);text-transform:uppercase;margin-bottom:6px">Account</div>';[{l:"Kusanagi's Platform ID",v:u.pcaId||did},{l:"Login",v:u.loginMethod||"—"},{l:"Joined",v:fd(u.joined)},{l:"Last Seen",v:fd(u.lastSeen)}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});
     h+='<div style="font-size:9px;font-weight:800;color:var(--blu);text-transform:uppercase;margin:10px 0 6px">Device</div>';[{l:"Model",v:u.deviceModel||"—"},{l:"OS",v:u.device||"—"},{l:"Browser",v:u.browser||"—"},{l:"Screen",v:u.screenSize||"—"},{l:"Language",v:u.language||"—"}].forEach(function(r){h+='<div class="mr"><span class="ml">'+r.l+'</span><span class="mv">'+r.v+'</span></div>';});}
     if(gameIds.length){h+='<div style="font-size:9px;font-weight:800;color:var(--gn);text-transform:uppercase;margin:10px 0 6px">Game IDs</div>';gameIds.forEach(function(g){var p=g.split(":");h+='<div class="mr"><span class="ml">'+p[0]+'</span><span class="mv" style="font-family:var(--m)">'+p[1]+'</span></div>';});}
     h+='<div style="font-size:9px;font-weight:800;color:var(--yw);text-transform:uppercase;margin:10px 0 6px">Stats</div><div class="mr"><span class="ml">Orders</span><span class="mv">'+uOrders.length+'</span></div><div class="mr"><span class="ml">Spent</span><span class="mv" style="color:var(--ac);font-weight:900">'+fmtP(sp)+'</span></div>';
@@ -1997,7 +1999,7 @@ h+='<div class="stc"><div class="stc-t" style="color:var(--blu)"><svg viewBox="0
   +'</div>'
   +'</div></div>';
 h+='<div class="stc"><div class="stc-t">Firebase</div><div class="str"><div class="stl">'+FC.projectId+'</div><span class="bg '+(fb?"su":"fa")+'" style="font-size:10px">'+(fb?"Online":"Offline")+'</span></div></div>';
-h+='<div class="stc"><div class="stl" style="color:var(--tx3)">PCA Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
+h+='<div class="stc"><div class="stl" style="color:var(--tx3)">Kusanagi's Platform Admin v3.0</div><div style="font-size:9px;color:var(--tx3)">Firebase • 2FA • PWA</div><button class="pwa-btn" onclick="installPWA()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Install App</button></div>';document.getElementById("pg-set").innerHTML=h;}
 function setup2FA(){pendingSecret=genSecret();document.getElementById("tfaSetup").style.display="block";document.getElementById("tfaSecret").textContent=pendingSecret;var uri="otpauth://totp/PcaAdmin:"+(adAuth&&adAuth.currentUser?adAuth.currentUser.email:"admin")+"?secret="+pendingSecret+"&issuer=PcaAdmin&digits=6&period=30";document.getElementById("tfaQR").src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data="+encodeURIComponent(uri);}
 async function activate2FA(){var code=document.getElementById("tfaVerify").value.replace(/\s/g,"");if(code.length!==6){document.getElementById("tfaSetupErr").textContent="Enter 6 digits";return;}try{var now=Math.floor(Date.now()/1000),valid=false;for(var w=-1;w<=1;w++){if(code===await genTOTP(pendingSecret,now+w*30)){valid=true;break;}}if(valid){TOTP_SECRET=pendingSecret;twoFaEnabled=true;if(fb)db.collection("config").doc("2fa").set({enabled:true,secret:TOTP_SECRET});toast("2FA Active!","ok");rSet();}else{document.getElementById("tfaSetupErr").textContent="Wrong code";}}catch(e){document.getElementById("tfaSetupErr").textContent="Error";}}
 function disable2FA(){adWarn({title:"Disable 2FA?",msg:"Two-factor authentication will be turned off. Anyone with your password can login.",okLabel:"Disable",type:"red",icon:"lock",onOk:function(){twoFaEnabled=false;TOTP_SECRET="";if(fb)db.collection("config").doc("2fa").set({enabled:false,secret:""});toast("2FA Disabled","er");rSet();}});}
@@ -2405,9 +2407,9 @@ var DEF_GAMES=[
 {n:"Arena of Valor",e:"🗡️",c:"#4f46e5",cur:"Voucher",ci:"🎟️",pl:"Mobile",img:"",pr:[{d:100,p:3000},{d:300,p:8000},{d:690,p:16000}]}
 ];
 var DEF_PAYMENTS=[
-{k:"kpay",n:"KBZ Pay",col:"#0066cc",ic:"K",ph:"09-123-456-789",hd:"PCA Store Official",img:"",qr:""},
-{k:"wave",n:"Wave Pay",col:"#f59e0b",ic:"W",ph:"09-987-654-321",hd:"PCA Store",img:"",qr:""},
-{k:"uab",n:"UAB Pay",col:"#10b981",ic:"U",ph:"09-555-888-111",hd:"PCA Store MM",img:"",qr:""}
+{k:"kpay",n:"KBZ Pay",col:"#0066cc",ic:"K",ph:"09-123-456-789",hd:"Kusanagi's Platform Official",img:"",qr:""},
+{k:"wave",n:"Wave Pay",col:"#f59e0b",ic:"W",ph:"09-987-654-321",hd:"Kusanagi's Platform",img:"",qr:""},
+{k:"uab",n:"UAB Pay",col:"#10b981",ic:"U",ph:"09-555-888-111",hd:"Kusanagi's Platform MM",img:"",qr:""}
 ];
 var DEF_EVENTS=[
 {emoji:"⚔️",bg:"linear-gradient(135deg,#1e3a5f,#1d4ed8)",badge:"live",game:"Mobile Legends",title:"Season 32 Starlight Pass",desc:"Get exclusive Starlight skins and emotes.",img:"",startDay:12,endDay:22,rewards:["500 Diamonds","Starlight Skin","Premium Chest"]},
